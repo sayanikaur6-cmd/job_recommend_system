@@ -6,26 +6,40 @@ import "../index.css"; // ensure CSS import
 export default function Home() {
 
   const [jobs, setJobs] = useState([]);
-
-  // Demo job data (later backend theke ashbe)
-  useEffect(() => {
-    const demoJobs = [
-      { id: 1, title: "Software Engineer", company: "Google", location: "Remote" },
-      { id: 2, title: "Product Designer", company: "Apple", location: "Dhaka, BD" },
-      { id: 3, title: "Frontend Developer", company: "Meta", location: "USA" },
-      { id: 4, title: "Data Scientist", company: "Amazon", location: "Bangalore, IN" },
-      { id: 5, title: "UI/UX Specialist", company: "Netflix", location: "UK" },
-      { id: 6, title: "Mobile App Dev", company: "Samsung", location: "Remote" },
-      { id: 7, title: "Cybersecurity Analyst", company: "Microsoft", location: "USA" },
-      { id: 8, title: "Marketing Manager", company: "Coca-Cola", location: "Dhaka, BD" },
-      { id: 9, title: "Cloud Architect", company: "Oracle", location: "Remote" },
-      { id: 10, title: "Project Manager", company: "Adobe", location: "California" }
-    ];
-
-    setJobs(demoJobs);
-    getLocation();
-  }, []);
 const [locationData, setLocationData] = useState(null);
+useEffect(() => {
+  getLocation();
+}, []);
+  // Demo job data (later backend theke ashbe)
+ useEffect(() => {
+  if (locationData?.state) {
+    fetchJobs(locationData.state);
+  }
+}, [locationData]);
+const fetchJobs = async (state) => {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/jobs/location?state=${state}`
+    );
+
+    const data = await response.json();
+
+    // mapping (API data → UI format)
+    const formattedJobs = data.map((job, index) => ({
+      id: index,
+      title: job.job_title,
+      company: job.employer_name,
+      location: job.job_city || job.job_country,
+      applyLink: job.apply_options?.[0]?.apply_link || "#"
+    }));
+
+    setJobs(formattedJobs);
+
+  } catch (error) {
+    console.error("Error fetching jobs:", error);
+  }
+};
+
   const [error, setError] = useState("");
 
  
