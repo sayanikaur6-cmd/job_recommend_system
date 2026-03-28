@@ -1,5 +1,5 @@
 const Job = require("../models/job");
-
+const fetchJobsByLocation = require("../services/fetchJobsByLocation");
 // CREATE
 exports.createJob = async (req, res) => {
   const job = await Job.create(req.body);
@@ -26,4 +26,20 @@ exports.updateJob = async (req, res) => {
 exports.deleteJob = async (req, res) => {
   await Job.findByIdAndDelete(req.params.id);
   res.json({ message: "Job deleted" });
+};
+exports.getJobloc = async (req, res) => {
+  try {
+    const { state } = req.query;
+
+    if (!state) {
+      return res.status(400).json({ message: "State is required" });
+    }
+
+    const jobs = await fetchJobsByLocation(state);
+
+    res.json(jobs);
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
