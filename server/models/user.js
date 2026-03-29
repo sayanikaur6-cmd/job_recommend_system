@@ -36,7 +36,16 @@ const userSchema = new mongoose.Schema({
       ip: String,
       device: String
     }
-  ]
+  ],
+   otp: {
+    type: String,
+    default: null
+  },
+
+  otp_expiry: {
+    type: Date,
+    default: null
+  }
 }, { timestamps: true }); // automatically adds createdAt & updatedAt
 
 
