@@ -1,7 +1,7 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const getNextSequence = require("../utils/getNextSequence"); // 👈 add this
-
+const { sendEmail } = require("../utils/emailService");
 // ===========================
 // Create new user
 // ===========================
@@ -13,11 +13,11 @@ exports.createUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
-    // 🔥 Get auto-increment user_id
+    // Auto increment ID
     const user_id = await getNextSequence("user_id");
 
     const newUser = new User({
-      user_id, // 👈 add this line
+      user_id,
       name,
       email,
       password_hash,
@@ -27,8 +27,50 @@ exports.createUser = async (req, res) => {
 
     await newUser.save();
 
+    // 📧 Send Email (non-blocking safe way)
+    sendEmail({
+      to: email,
+      subject: "Welcome 🎉",
+      html: `
+            <div style="font-family: Arial, sans-serif; background-color: #f4f7f9; padding: 20px;">
+              
+              <div style="max-width: 500px; margin: auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                
+                <!-- Header -->
+                <div style="background: #4CAF50; padding: 20px; text-align: center; color: white;">
+                  <h1 style="margin: 0;">Welcome 🎉</h1>
+                </div>
+
+                <!-- Body -->
+                <div style="padding: 30px; text-align: center;">
+                  <h2 style="color: #333;">Hello ${name},</h2>
+                  <p style="color: #555; font-size: 16px;">
+                    Your account has been created successfully.
+                  </p>
+
+                  <p style="color: #777; font-size: 14px;">
+                    We're excited to have you onboard 🚀
+                  </p>
+
+                  <!-- Button -->
+                  <a href="http://localhost:3000"
+                    style="display: inline-block; margin-top: 20px; padding: 12px 25px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-size: 16px;">
+                    Go to Dashboard
+                  </a>
+                </div>
+
+                <!-- Footer -->
+                <div style="background: #f1f1f1; padding: 15px; text-align: center; font-size: 12px; color: #888;">
+                  <p style="margin: 0;">© 2026 Your App. All rights reserved.</p>
+                </div>
+
+              </div>
+            </div>
+            `
+    });
+
     res.status(201).json({
-      message: "User created successfully",
+      message: "User created successfully & email sent",
       user: newUser
     });
 
