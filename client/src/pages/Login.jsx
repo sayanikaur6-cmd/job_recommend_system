@@ -1,10 +1,46 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
   const navigate = useNavigate(); // ✅ navigation hook
+const handleLogin = async (e) => {
+  e.preventDefault();
 
+  try {
+    const res = await fetch("http://localhost:5000/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email,
+        password
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      // 🔥 Save token
+      localStorage.setItem("token", data.token);
+
+      alert("Login successful");
+
+      // redirect
+      navigate("/"); // or dashboard
+    } else {
+      alert(data.message || "Login failed");
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("Server error");
+  }
+};
   return (
     <div className="container-fluid vh-100">
       <div className="row h-100">
@@ -46,7 +82,7 @@ const Login = () => {
               Candidate Sign In
             </h4>
 
-            <form>
+            <form onSubmit={handleLogin}>
               {/* Username */}
               <div className="mb-3">
                 <label className="form-label">Username or email</label>
@@ -54,6 +90,8 @@ const Login = () => {
                   type="text"
                   className="form-control"
                   placeholder="Enter your username or email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
 
@@ -71,6 +109,8 @@ const Login = () => {
                     type={showPassword ? "text" : "password"}
                     className="form-control"
                     placeholder="Enter password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                   <button
                     type="button"
@@ -83,7 +123,7 @@ const Login = () => {
               </div>
 
               {/* Button */}
-              <button className="btn btn-primary w-100 mb-3">
+              <button type="submit" className="btn btn-primary w-100 mb-3">
                 Sign In
               </button>
 

@@ -7,6 +7,8 @@ const statesAndCities = require("./config/state.json");
 app.use(cors());
 app.use(express.json());
 app.use("/api/jobs", require("./routes/jobRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/auth", require("./routes/authRoutes"));
 
 app.get("/get-state", async (req, res) => {
   const { lat, lng } = req.query;

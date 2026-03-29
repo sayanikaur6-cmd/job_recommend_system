@@ -3,6 +3,47 @@ import { useNavigate } from "react-router-dom";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const handleRegister = async (e) => {
+    e.preventDefault();
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:5000/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Registration successful");
+
+        // 🔥 redirect to login
+        navigate("/login");
+      } else {
+        alert(data.message || "Registration failed");
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("Server error");
+    }
+  };
   const navigate = useNavigate();
 
   return (
@@ -53,7 +94,7 @@ const Register = () => {
               Create Account ✨
             </h3>
 
-            <form>
+            <form onSubmit={handleRegister}>
 
               {/* Name */}
               <div className="mb-3">
@@ -62,6 +103,8 @@ const Register = () => {
                   type="text"
                   className="form-control rounded-pill"
                   placeholder="Enter your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                 />
               </div>
 
@@ -72,6 +115,8 @@ const Register = () => {
                   type="email"
                   className="form-control rounded-pill"
                   placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
 
@@ -83,6 +128,8 @@ const Register = () => {
                     type={showPassword ? "text" : "password"}
                     className="form-control rounded-start-pill"
                     placeholder="Create password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                   <button
                     type="button"
@@ -101,11 +148,14 @@ const Register = () => {
                   type="password"
                   className="form-control rounded-pill"
                   placeholder="Confirm password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                 />
               </div>
 
               {/* Button */}
               <button
+                type="submit"
                 className="btn w-100 mb-3"
                 style={{
                   background: "linear-gradient(135deg, #4e73df, #224abe)",
