@@ -1,18 +1,31 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useState, useEffect } from "react"; // ✅ ADD THIS
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 import Register from "./pages/Register";
 import Navbar from "./components/Navbar";
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // 🔥 Check token on reload
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
+  
   return (
     <>
-      <Navbar />
+      <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/register" element={<Register />} />
       </Routes>
     </>

@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/userController");
-
+const verifyToken = require("../middleware/auth");
 // Create
 router.post("/", userController.createUser);
 
 // Read
 router.get("/", userController.getAllUsers);
+router.get("/profile", verifyToken, userController.getProfile);
 router.get("/:id", userController.getUserById);
 
 // Update

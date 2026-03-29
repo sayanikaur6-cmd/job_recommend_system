@@ -1,46 +1,50 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-
-const Login = () => {
+const Login = ({ setIsLoggedIn }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
-const [password, setPassword] = useState("");
-  const navigate = useNavigate(); // ✅ navigation hook
-const handleLogin = async (e) => {
-  e.preventDefault();
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  try {
-    const res = await fetch("http://localhost:5000/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        email,
-        password
-      })
-    });
+  const handleLogin = async (e) => {
+    e.preventDefault();
 
-    const data = await res.json();
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email,
+          password
+        })
+      });
 
-    if (res.ok) {
-      // 🔥 Save token
-      localStorage.setItem("token", data.token);
+      const data = await res.json();
 
-      alert("Login successful");
+      if (res.ok) {
+        // ✅ Save token
+        localStorage.setItem("token", data.token);
 
-      // redirect
-      navigate("/"); // or dashboard
-    } else {
-      alert(data.message || "Login failed");
+        // 🔥 LOGIN STATE TRUE
+        setIsLoggedIn(true);
+
+        alert("Login successful");
+
+        // redirect to home
+        navigate("/");
+      } else {
+        alert(data.message || "Login failed");
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("Server error");
     }
+  };
 
-  } catch (error) {
-    console.error(error);
-    alert("Server error");
-  }
-};
   return (
     <div className="container-fluid vh-100">
       <div className="row h-100">
@@ -83,7 +87,7 @@ const handleLogin = async (e) => {
             </h4>
 
             <form onSubmit={handleLogin}>
-              {/* Username */}
+              {/* Email */}
               <div className="mb-3">
                 <label className="form-label">Username or email</label>
                 <input
@@ -92,6 +96,7 @@ const handleLogin = async (e) => {
                   placeholder="Enter your username or email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
 
@@ -111,6 +116,7 @@ const handleLogin = async (e) => {
                     placeholder="Enter password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    required
                   />
                   <button
                     type="button"
@@ -127,13 +133,13 @@ const handleLogin = async (e) => {
                 Sign In
               </button>
 
-              {/* ✅ Navigation added এখানে */}
+              {/* Go to Register */}
               <p className="text-center small">
                 Don't have an account?{" "}
                 <span
                   className="text-primary fw-semibold"
                   style={{ cursor: "pointer" }}
-                  onClick={() => navigate("/register")} // 🔥 go to register
+                  onClick={() => navigate("/register")}
                 >
                   Sign up
                 </span>
@@ -142,11 +148,11 @@ const handleLogin = async (e) => {
               <hr />
 
               {/* Social Login */}
-              <button className="btn btn-light border w-100 mb-2">
+              <button type="button" className="btn btn-light border w-100 mb-2">
                 🔵 Sign in with Google
               </button>
 
-              <button className="btn btn-light border w-100">
+              <button type="button" className="btn btn-light border w-100">
                 💼 Sign in with LinkedIn
               </button>
             </form>
