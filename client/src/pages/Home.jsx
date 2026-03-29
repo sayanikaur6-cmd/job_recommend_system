@@ -62,7 +62,7 @@ export default function Home() {
             const data = await response.json();
             setLocationData(data);
           } catch (err) {
-            setError("Failed to fetch location data");
+            setError("Failed to fetch location data"+err);
             setLoading(false);
           }
         },
