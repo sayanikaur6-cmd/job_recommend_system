@@ -104,17 +104,17 @@ const Login = ({ setIsLoggedIn }) => {
               <div className="mb-3">
                 <div className="d-flex justify-content-between">
                   <label className="form-label">Password</label>
-<small
-  className="text-primary"
-  style={{ cursor: "pointer" }}
-  onClick={() =>
-    navigate("/forgot-password", {
-      state: { email },
-    })
-  }
->
-  Forgot password?
-</small>
+                  <small
+                    className="text-primary"
+                    style={{ cursor: "pointer" }}
+                    onClick={() =>
+                      navigate("/forgot-password", {
+                        state: { email },
+                      })
+                    }
+                  >
+                    Forgot password?
+                  </small>
                 </div>
 
                 <div className="input-group">
@@ -156,7 +156,9 @@ const Login = ({ setIsLoggedIn }) => {
               <hr />
 
               {/* Social Login */}
-              <button type="button" className="btn btn-light border w-100 mb-2">
+              <button type="button" className="btn btn-light border w-100 mb-2" onClick={() => {
+                window.open("http://localhost:5000/api/auth/google", "_self");
+              }}>
                 🔵 Sign in with Google
               </button>
 

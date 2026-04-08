@@ -4,11 +4,28 @@ const cors = require("cors");
 const axios = require("axios");
 const fetchJobsByLocation = require("./services/fetchJobsByLocation");
 const statesAndCities = require("./config/state.json");
+const session = require("express-session");
+const passport = require("./config/passport");
 app.use(cors());
 app.use(express.json());
+// 🔐 Session
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false
+}));
+
+// 🔑 Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+// Routes
 app.use("/api/jobs", require("./routes/jobRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
+
+
 
 app.get("/get-state", async (req, res) => {
   const { lat, lng } = req.query;
