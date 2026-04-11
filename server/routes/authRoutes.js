@@ -5,7 +5,8 @@ const {
   loginUser,
   forgotPassword,
   verifyOTP,
-  resetPassword
+  resetPassword,
+  googleCallback 
 } = require("../controllers/authController");
 
 // 🔐 Login
@@ -19,29 +20,22 @@ router.post("/verify-otp", verifyOTP);
 
 // 🔄 Reset Password
 router.post("/reset-password", resetPassword);
-router.get("/google",
+// 🔹 Google Login Start
+router.get(
+  "/google",
   passport.authenticate("google", {
     scope: ["profile", "email"]
   })
 );
 
-// 🔹 Callback
-router.get("/google/callback",
+// 🔹 Google Callback
+router.get(
+  "/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "/login"
+    failureRedirect: "/login",
+    session: false
   }),
-  async (req, res) => {
-
-    // 🔥 login history save
-    req.user.login_history.push({
-      ip: req.ip,
-      device: req.headers["user-agent"]
-    });
-
-    await req.user.save();
-
-    res.redirect(process.env.FRONTEND_URL + "/");
-  }
+  googleCallback // ✅ controller call
 );
 
 // 🔹 Get user
