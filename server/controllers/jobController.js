@@ -68,7 +68,7 @@ exports.searchJobs = async (req, res) => {
     res.json(response.data.data);
 
   } catch (error) {
-    console.log("KEY:", process.env.RAPIDAPI_KEY);
+    //console.log("KEY:", process.env.RAPIDAPI_KEY);
     console.error("Search Job Error:", error.message);
     res.status(500).json({ error: "Failed to fetch jobs" });
   }
