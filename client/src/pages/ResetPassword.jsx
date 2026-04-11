@@ -4,8 +4,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
+
   const email = location.state?.email;
   const otp = location.state?.otp;
   const handleReset = async (e) => {
