@@ -16,11 +16,11 @@ export default function Home() {
   }, []);
 
   // Fetch jobs after location is ready
-  useEffect(() => {
-    if (locationData?.state) {
-      fetchJobs(locationData.state);
-    }
-  }, [locationData]);
+  // useEffect(() => {
+  //   if (locationData?.state) {
+  //     fetchJobs(locationData.state);
+  //   }
+  // }, [locationData]);
 
   const fetchJobs = async (state) => {
     try {
