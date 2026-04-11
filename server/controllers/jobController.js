@@ -1,5 +1,6 @@
 const Job = require("../models/job");
 const fetchJobsByLocation = require("../services/fetchJobsByLocation");
+const axios = require("axios");
 // CREATE
 exports.createJob = async (req, res) => {
   const job = await Job.create(req.body);
@@ -41,5 +42,34 @@ exports.getJobloc = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: "Server error" });
+  }
+};
+exports.searchJobs = async (req, res) => {
+  const { query } = req.query;
+
+  try {
+    const response = await axios.get(
+      "https://jsearch.p.rapidapi.com/search",
+      {
+        params: {
+          query: query || "developer jobs",
+          page: "1",
+          num_pages: "1",
+          country: "in",
+          date_posted: "all"
+        },
+        headers: {
+          "x-rapidapi-key": process.env.RAPIDAPI_KEY,
+          "x-rapidapi-host": "jsearch.p.rapidapi.com"
+        }
+      }
+    );
+
+    res.json(response.data.data);
+
+  } catch (error) {
+    console.log("KEY:", process.env.RAPIDAPI_KEY);
+    console.error("Search Job Error:", error.message);
+    res.status(500).json({ error: "Failed to fetch jobs" });
   }
 };
