@@ -16,36 +16,36 @@ export default function Home() {
   }, []);
 
   // Fetch jobs after location is ready
-  useEffect(() => {
-    if (locationData?.state) {
-      fetchJobs(locationData.state);
-    }
-  }, [locationData]);
+  // useEffect(() => {
+  //   if (locationData?.state) {
+  //     fetchJobs(locationData.state);
+  //   }
+  // }, [locationData]);
 
-  const fetchJobs = async (state) => {
-    try {
-      setLoading(true); // start loader
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/jobs/location?state=${state}`
-      );
-      const data = await response.json();
+  // const fetchJobs = async (state) => {
+  //   try {
+  //     setLoading(true); // start loader
+  //     const response = await fetch(
+  //       `${import.meta.env.VITE_API_URL}/api/jobs/location?state=${state}`
+  //     );
+  //     const data = await response.json();
 
-      const formattedJobs = data.map((job, index) => ({
-        id: index,
-        title: job.job_title,
-        company: job.employer_name,
-        location: job.job_city || job.job_country,
-        applyLink: job.apply_options?.[0]?.apply_link || "#",
-      }));
+  //     const formattedJobs = data.map((job, index) => ({
+  //       id: index,
+  //       title: job.job_title,
+  //       company: job.employer_name,
+  //       location: job.job_city || job.job_country,
+  //       applyLink: job.apply_options?.[0]?.apply_link || "#",
+  //     }));
 
-      setJobs(formattedJobs);
-      setLoading(false); // stop loader
-    } catch (error) {
-      console.error("Error fetching jobs:", error);
-      setError("Failed to fetch jobs");
-      setLoading(false);
-    }
-  };
+  //     setJobs(formattedJobs);
+  //     setLoading(false); // stop loader
+  //   } catch (error) {
+  //     console.error("Error fetching jobs:", error);
+  //     setError("Failed to fetch jobs");
+  //     setLoading(false);
+  //   }
+  // };
 
   const getLocation = () => {
     setLoading(true); // start loader during location fetch

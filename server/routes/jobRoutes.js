@@ -7,5 +7,5 @@ router.get("/", jobController.getJobs);
 router.get("/location", jobController.getJobloc);
 router.put("/:id", jobController.updateJob);
 router.delete("/:id", jobController.deleteJob);
-
+router.get("/search", jobController.searchJobs);
 module.exports = router;

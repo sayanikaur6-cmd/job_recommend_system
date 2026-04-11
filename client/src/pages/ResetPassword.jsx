@@ -12,7 +12,6 @@ const ResetPassword = () => {
   const location = useLocation();
 
   const email = location.state?.email;
-  const otp = location.state?.otp;
 
   const handleReset = async (e) => {
     e.preventDefault();
@@ -26,11 +25,7 @@ const ResetPassword = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        email,
-        otp,
-        newPassword: password,
-      }),
+      body: JSON.stringify({ email, password }),
     });
 
     const data = await res.json();
@@ -44,63 +39,23 @@ const ResetPassword = () => {
   };
 
   return (
-    <div
-      className="d-flex justify-content-center align-items-center vh-100"
-      style={{
-        background: "linear-gradient(135deg,#6a5acd,#4e73df)",
-      }}
-    >
-      <div
-        className="card p-4 shadow"
-        style={{
-          width: "420px",
-          borderRadius: "18px",
-        }}
-      >
-        <h3 className="fw-bold mb-3">Reset Password</h3>
-
-        <form onSubmit={handleReset}>
-          {/* New Password */}
-          <div className="position-relative my-3">
-            <input
-              type={showPassword ? "text" : "password"}
-              className="form-control"
-              placeholder="New Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <button
-              type="button"
-              className="btn position-absolute top-50 end-0 translate-middle-y border-0 bg-transparent"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? "🙈" : "👁"}
-            </button>
-          </div>
-
-          {/* Confirm Password */}
-          <div className="position-relative my-3">
-            <input
-              type={showConfirm ? "text" : "password"}
-              className="form-control"
-              placeholder="Confirm Password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-            />
-            <button
-              type="button"
-              className="btn position-absolute top-50 end-0 translate-middle-y border-0 bg-transparent"
-              onClick={() => setShowConfirm(!showConfirm)}
-            >
-              {showConfirm ? "🙈" : "👁"}
-            </button>
-          </div>
-
-          <button className="btn btn-primary w-100">
-            Save Password
-          </button>
-        </form>
-      </div>
+    <div className="container mt-5 text-center">
+      <h3>Reset Password</h3>
+      <form onSubmit={handleReset}>
+        <input
+          type="password"
+          className="form-control my-2"
+          placeholder="New password"
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <input
+          type="password"
+          className="form-control my-2"
+          placeholder="Confirm password"
+          onChange={(e) => setConfirm(e.target.value)}
+        />
+        <button className="btn btn-danger w-100">Save Password</button>
+      </form>
     </div>
   );
 };

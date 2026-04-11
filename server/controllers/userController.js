@@ -53,7 +53,7 @@ exports.createUser = async (req, res) => {
                   </p>
 
                   <!-- Button -->
-                  <a href="http://localhost:3000"
+                  <a href="http://localhost:5173"
                     style="display: inline-block; margin-top: 20px; padding: 12px 25px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-size: 16px;">
                     Go to Dashboard
                   </a>
