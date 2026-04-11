@@ -3,13 +3,20 @@ import Navbar from "../components/Navbar";
 import JobCard from "../components/JobCard";
 import "../index.css";
 import { Link } from "react-router-dom";
+import { handleGoogleRedirect } from "../utils/auth";
 
 export default function Home() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true); // initially true
   const [locationData, setLocationData] = useState(null);
   const [error, setError] = useState("");
+  useEffect(() => {
+    const isLoggedIn = handleGoogleRedirect();
 
+    if (isLoggedIn) {
+      window.location.reload(); // or set state
+    }
+  }, []);
   // Get user location
   useEffect(() => {
     getLocation();
@@ -62,7 +69,7 @@ export default function Home() {
             const data = await response.json();
             setLocationData(data);
           } catch (err) {
-            setError("Failed to fetch location data"+err);
+            setError("Failed to fetch location data" + err);
             setLoading(false);
           }
         },
