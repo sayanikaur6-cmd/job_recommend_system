@@ -105,12 +105,16 @@ const Login = ({ setIsLoggedIn }) => {
                 <div className="d-flex justify-content-between">
                   <label className="form-label">Password</label>
                   <small
-  className="text-primary"
-  style={{ cursor: "pointer" }}
-  onClick={() => navigate("/forgot-password")}  // 🔥 ADD THIS
->
-  Forgot password?
-</small>
+                    className="text-primary"
+                    style={{ cursor: "pointer" }}
+                    onClick={() =>
+                      navigate("/forgot-password", {
+                        state: { email },
+                      })
+                    }
+                  >
+                    Forgot password?
+                  </small>
                 </div>
 
                 <div className="input-group">
