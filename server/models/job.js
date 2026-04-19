@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { mainDB } = require("../config/db");
 
 const jobSchema = new mongoose.Schema({
   title: String,
@@ -8,4 +9,4 @@ const jobSchema = new mongoose.Schema({
   salary: String
 }, { timestamps: true });
 
-module.exports = mongoose.model("Job", jobSchema);
+module.exports = mainDB.model("Job", jobSchema);

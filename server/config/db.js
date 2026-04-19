@@ -1,15 +1,12 @@
+// config/db.js
 const mongoose = require("mongoose");
 
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      dbName: "jobrecommend"
-    });
-    console.log("MongoDB Connected");
-  } catch (error) {
-    console.error(error.message);
-    process.exit(1);
-  }
-};
+const mainDB = mongoose.createConnection(process.env.MONGO_URI, {
+  dbName: "jobrecommend",
+});
 
-module.exports = connectDB;
+const chatDB = mongoose.createConnection(process.env.CHAT_URI, {
+  dbName: "chatDB",
+});
+
+module.exports = { mainDB, chatDB };
