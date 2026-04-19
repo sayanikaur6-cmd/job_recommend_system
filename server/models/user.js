@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-
 const userSchema = new mongoose.Schema({
   user_id: {
     type: Number,
@@ -22,12 +21,12 @@ const userSchema = new mongoose.Schema({
 
   password_hash: {
     type: String,
-    default: null   // 🔥 important change
+    default: null
   },
 
   googleId: {
     type: String,
-    default: null   // 🔥 new field
+    default: null
   },
 
   photo: {
@@ -54,17 +53,70 @@ const userSchema = new mongoose.Schema({
     }
   ],
 
-  otp: {
+  // 🔥 NEW FIELDS START HERE
+
+  phone: {
     type: String,
-    default: null
+    default: ""
   },
 
-  otp_expiry: {
-    type: Date,
-    default: null
+  location: {
+    type: String,
+    default: ""
+  },
+
+  skills: {
+    type: [String],
+    default: []
+  },
+
+  education: {
+    type: String,
+    default: ""
+  },
+
+  experience: {
+    type: String,
+    default: ""
+  },
+
+  preferredRole: {
+    type: String,
+    default: ""
+  },
+
+  bio: {
+    type: String,
+    default: ""
+  },
+
+  linkedin: {
+    type: String,
+    default: ""
+  },
+
+  github: {
+    type: String,
+    default: ""
+  },
+
+  // 🔥 FILE STORAGE
+
+  profilePic: {
+    type: String,
+    default: ""
+  },
+
+  resume: {
+    type: String,
+    default: ""
+  },
+
+  documents: {
+    type: String,
+    default: ""
   }
 
 }, { timestamps: true });
-
 
 module.exports = mongoose.model("User", userSchema);

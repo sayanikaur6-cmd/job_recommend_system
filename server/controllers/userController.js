@@ -2,6 +2,7 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const getNextSequence = require("../utils/getNextSequence"); // 👈 add this
 const { sendEmail } = require("../utils/emailService");
+
 // ===========================
 // Create new user
 // ===========================
@@ -159,5 +160,59 @@ exports.deleteUser = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error deleting user", error: error.message });
+  }
+};
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const updateData = {
+      name: req.body.name,
+      phone: req.body.phone,
+      location: req.body.location,
+      education: req.body.education,
+      experience: req.body.experience,
+      preferredRole: req.body.preferredRole,
+      bio: req.body.bio,
+      linkedin: req.body.linkedin,
+      github: req.body.github,
+    };
+
+    // skills string → array
+    if (req.body.skills) {
+      updateData.skills = JSON.parse(req.body.skills);
+    }
+
+    // FILES HANDLE
+    if (req.files?.profilePhoto) {
+      updateData.profilePic = req.files.profilePhoto[0].filename;
+    }
+
+    if (req.files?.resume) {
+      updateData.resume = req.files.resume[0].filename;
+    }
+
+    if (req.files?.documents) {
+      updateData.documents = req.files.documents[0].filename;
+    }
+  if (req.files?.profilePhoto) {
+  updateData.profilePic = `/uploads/profile/${req.files.profilePhoto[0].filename}`;
+}
+
+if (req.files?.resume) {
+  updateData.resume = `/uploads/resume/${req.files.resume[0].filename}`;
+}
+
+if (req.files?.documents) {
+  updateData.documents = `/uploads/documents/${req.files.documents[0].filename}`;
+}
+    const user = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    });
+
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Update failed" });
   }
 };

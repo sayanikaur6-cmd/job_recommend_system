@@ -80,8 +80,7 @@ const Profile = () => {
                   "translateY(-6px) scale(1.02)")
               }
               onMouseLeave={(e) =>
-                (e.currentTarget.style.transform =
-                  "translateY(0px) scale(1)")
+                (e.currentTarget.style.transform = "translateY(0px) scale(1)")
               }
             >
               {/* Cover mini glow */}
@@ -98,8 +97,9 @@ const Profile = () => {
               {/* Profile Photo */}
               <img
                 src={
-                  user.profilePic ||
-                  "https://via.placeholder.com/140"
+                  user.profilePic
+                    ? `http://localhost:5000/uploads/${user.profilePic}`
+                    : "https://via.placeholder.com/140"
                 }
                 alt="profile"
                 className="rounded-circle"
@@ -167,8 +167,7 @@ const Profile = () => {
                     style={{
                       width: "80%",
                       borderRadius: "20px",
-                      background:
-                        "linear-gradient(90deg, #ffffff, #c3dafe)",
+                      background: "linear-gradient(90deg, #ffffff, #c3dafe)",
                     }}
                   ></div>
                 </div>
