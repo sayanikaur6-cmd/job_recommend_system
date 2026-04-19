@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const EditProfile = () => {
   const navigate = useNavigate();
+
+  const [preview, setPreview] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -21,22 +23,95 @@ const EditProfile = () => {
     documents: null,
   });
 
+  // ✅ FETCH OLD DATA
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("http://localhost:5000/api/users/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setFormData({
+          ...formData,
+          name: data.name || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          location: data.location || "",
+          preferredRole: data.preferredRole || "",
+          skills: data.skills?.join(", ") || "",
+          experience: data.experience || "",
+          education: data.education || "",
+          linkedin: data.linkedin || "",
+          github: data.github || "",
+          bio: data.bio || "",
+        });
+
+        setPreview(data.profilePic);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  // ✅ HANDLE CHANGE
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    setFormData({
-      ...formData,
-      [name]: files ? files[0] : value,
-    });
+    if (files) {
+      if (name === "profilePhoto") {
+        setPreview(URL.createObjectURL(files[0]));
+      }
+
+      setFormData({
+        ...formData,
+        [name]: files[0],
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
   };
 
-  const handleSubmit = (e) => {
+  // ✅ SUBMIT WITH FILE
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("Submitted Data:", formData);
-    alert("Profile Updated Successfully ✅");
+    const token = localStorage.getItem("token");
 
-    navigate("/profile");
+    const data = new FormData();
+
+    Object.keys(formData).forEach((key) => {
+      if (key === "skills") {
+        data.append(key, JSON.stringify(formData.skills.split(",")));
+      } else {
+        data.append(key, formData[key]);
+      }
+    });
+
+    const res = await fetch("http://localhost:5000/api/users/profile", {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: data,
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      alert("Profile Updated Successfully ✅");
+      navigate("/profile");
+    } else {
+      alert("Update Failed ❌");
+    }
   };
 
   return (
@@ -46,7 +121,6 @@ const EditProfile = () => {
         backgroundImage:
           "url('https://images.unsplash.com/photo-1497366754035-f200968a6e72')",
         backgroundSize: "cover",
-        backgroundPosition: "center",
         padding: "50px 0",
       }}
     >
@@ -59,131 +133,92 @@ const EditProfile = () => {
             borderRadius: "25px",
             background: "rgba(76, 81, 191, 0.25)",
             backdropFilter: "blur(20px)",
-            boxShadow: "0 10px 40px rgba(0,0,0,0.25)",
-            border: "1px solid rgba(255,255,255,0.2)",
             color: "#fff",
           }}
         >
-          <h2 className="text-center fw-bold mb-4">
-            Edit Professional Profile
-          </h2>
+          <h2 className="text-center mb-4">Edit Professional Profile</h2>
+
+          {/* PROFILE PREVIEW */}
+          <div className="text-center mb-4">
+            <img
+              src={preview || "https://via.placeholder.com/120"}
+              alt="preview"
+              className="rounded-circle"
+              width="120"
+              height="120"
+              style={{ objectFit: "cover" }}
+            />
+          </div>
 
           <form onSubmit={handleSubmit}>
             <div className="row">
+
+              {/* NAME */}
               <div className="col-md-6 mb-3">
                 <label>Full Name</label>
                 <input
-                  type="text"
                   className="form-control"
                   name="name"
+                  value={formData.name}
                   onChange={handleChange}
                 />
               </div>
 
+              {/* EMAIL */}
               <div className="col-md-6 mb-3">
                 <label>Email</label>
                 <input
-                  type="email"
                   className="form-control"
-                  name="email"
-                  onChange={handleChange}
+                  value={formData.email}
+                  disabled
                 />
               </div>
 
+              {/* PHONE */}
               <div className="col-md-6 mb-3">
                 <label>Phone</label>
                 <input
-                  type="text"
                   className="form-control"
                   name="phone"
+                  value={formData.phone}
                   onChange={handleChange}
                 />
               </div>
 
+              {/* LOCATION */}
               <div className="col-md-6 mb-3">
                 <label>Location</label>
                 <input
-                  type="text"
                   className="form-control"
                   name="location"
+                  value={formData.location}
                   onChange={handleChange}
                 />
               </div>
 
+              {/* ROLE */}
               <div className="col-md-6 mb-3">
                 <label>Preferred Role</label>
                 <input
-                  type="text"
                   className="form-control"
                   name="preferredRole"
-                  placeholder="Frontend Developer"
+                  value={formData.preferredRole}
                   onChange={handleChange}
                 />
               </div>
 
+              {/* SKILLS */}
               <div className="col-md-6 mb-3">
                 <label>Skills</label>
                 <input
-                  type="text"
                   className="form-control"
                   name="skills"
-                  placeholder="React, Node, MongoDB"
+                  value={formData.skills}
                   onChange={handleChange}
                 />
               </div>
 
-              <div className="col-md-6 mb-3">
-                <label>Experience</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="experience"
-                  placeholder="2 years"
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="col-md-6 mb-3">
-                <label>Education</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="education"
-                  placeholder="B.Tech CSE"
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="col-md-6 mb-3">
-                <label>LinkedIn</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="linkedin"
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="col-md-6 mb-3">
-                <label>GitHub / Portfolio</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="github"
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="col-12 mb-3">
-                <label>About Yourself</label>
-                <textarea
-                  className="form-control"
-                  rows="4"
-                  name="bio"
-                  onChange={handleChange}
-                />
-              </div>
-
+              {/* FILE UPLOAD */}
               <div className="col-md-4 mb-3">
                 <label>Profile Photo</label>
                 <input
@@ -207,7 +242,7 @@ const EditProfile = () => {
               </div>
 
               <div className="col-md-4 mb-3">
-                <label>Certificates / Docs</label>
+                <label>Documents</label>
                 <input
                   type="file"
                   accept=".pdf,image/*"
@@ -218,18 +253,8 @@ const EditProfile = () => {
               </div>
             </div>
 
-            <button
-              className="btn w-100 mt-4"
-              style={{
-                background: "#fff",
-                color: "#4c51bf",
-                fontWeight: "700",
-                borderRadius: "30px",
-                padding: "12px",
-                fontSize: "17px",
-              }}
-            >
-              Save Professional Profile 🚀
+            <button className="btn btn-light w-100 mt-3">
+              Save Profile 🚀
             </button>
           </form>
         </div>
