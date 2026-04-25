@@ -98,7 +98,7 @@ const Profile = () => {
               <img
                 src={
                   user.profilePic
-                    ? `http://localhost:5000/uploads/${user.profilePic}`
+                    ? `http://localhost:5000${user.profilePic}`
                     : "https://via.placeholder.com/140"
                 }
                 alt="profile"
