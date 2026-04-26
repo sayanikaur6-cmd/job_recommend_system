@@ -11,6 +11,7 @@ import VerifyOtp from "./pages/VerifyOtp";
 import ResetPassword from "./pages/ResetPassword";
 import Navbar from "./components/Navbar";
 import SearchResults from "./pages/SearchResults";
+import JobDetails from "./pages/JobDetails";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -37,6 +38,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/register" element={<Register />} />
         <Route path="/search-results" element={<SearchResults />} />
+        <Route path="/job-details" element={<JobDetails />} />
       </Routes>
     </>
   );

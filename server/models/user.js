@@ -81,9 +81,9 @@ const userSchema = new mongoose.Schema({
   },
 
   preferredRole: {
-    type: String,
-    default: ""
-  },
+  type: [String],   // 🔥 array
+  default: []
+},
 
   bio: {
     type: String,

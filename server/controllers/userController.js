@@ -216,3 +216,33 @@ if (req.files?.documents) {
     res.status(500).json({ message: "Update failed" });
   }
 };
+exports.updateSingleField = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { field, value } = req.body;
+
+    const allowedFields = [
+      "name",
+      "email",
+      "phone",
+      "location",
+      "linkedin",
+      "github",
+      "facebook",
+    ];
+
+    if (!allowedFields.includes(field)) {
+      return res.status(400).json({ message: "Invalid field" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { [field]: value },
+      { new: true }
+    );
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

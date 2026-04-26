@@ -7,7 +7,7 @@ const verifyToken = require("../middleware/auth");
 // 🔥 NEW IMPORTS
 const upload = require("../middleware/upload");
 const { updateProfile } = require("../controllers/userController");
-const authMiddleware = require("../middleware/auth");
+// const authMiddleware = require("../middleware/auth");
 
 // Create
 router.post("/", userController.createUser);
@@ -21,7 +21,7 @@ router.get("/profile", verifyToken, userController.getProfile);
 // Update Profile (WITH FILE UPLOAD)
 router.put(
   "/profile",
-  authMiddleware,
+  verifyToken,
   upload.fields([
     { name: "profilePhoto", maxCount: 1 },
     { name: "resume", maxCount: 1 },
@@ -32,7 +32,7 @@ router.put(
 
 // Other routes
 router.get("/:id", userController.getUserById);
-router.put("/:id", userController.updateUser);
+router.put("/update-field", verifyToken,userController.updateSingleField);
+router.put("/:id", userController.updateSingleField);
 router.delete("/:id", userController.deleteUser);
-
 module.exports = router;
