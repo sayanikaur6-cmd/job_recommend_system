@@ -12,7 +12,7 @@ const ResetPassword = () => {
   const location = useLocation();
 
   const email = location.state?.email;
-
+  const otp = location.state?.otp;
   const handleReset = async (e) => {
     e.preventDefault();
 
@@ -22,10 +22,10 @@ const ResetPassword = () => {
 
     const res = await fetch("http://localhost:5000/api/auth/reset-password", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email,
+    otp,
+    newPassword: password }),
     });
 
     const data = await res.json();
@@ -39,23 +39,25 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="container mt-5 text-center">
-      <h3>Reset Password</h3>
-      <form onSubmit={handleReset}>
-        <input
-          type="password"
-          className="form-control my-2"
-          placeholder="New password"
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <input
-          type="password"
-          className="form-control my-2"
-          placeholder="Confirm password"
-          onChange={(e) => setConfirm(e.target.value)}
-        />
-        <button className="btn btn-danger w-100">Save Password</button>
-      </form>
+    <div className="d-flex justify-content-center align-items-center vh-100" style={{ background: "linear-gradient(135deg,#6a5acd,#4e73df)" }}>
+      <div className="card p-4 shadow" style={{ width: "420px", borderRadius: "18px" }}>
+        <h3 className="fw-bold mb-3">Reset Password</h3>
+        <form onSubmit={handleReset}>
+          <input
+            type="password"
+            className="form-control my-3"
+            placeholder="New Password"
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <input
+            type="password"
+            className="form-control my-3"
+            placeholder="Confirm Password"
+            onChange={(e) => setConfirm(e.target.value)}
+          />
+          <button className="btn btn-primary w-100">Save Password </button> 
+        </form>
+      </div>
     </div>
   );
 };

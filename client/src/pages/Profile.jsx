@@ -94,17 +94,38 @@ const Profile = () => {
     );
 
   // --- Handlers (Logic remains unchanged) ---
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleImageChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const token = localStorage.getItem("token");
+  // 🔹 preview (তোরটা ঠিক আছে)
+  setImageFile(file);
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    setSelectedImage(reader.result);
   };
+  reader.readAsDataURL(file);
+
+  // 🔥 backend upload
+  const formData = new FormData();
+  formData.append("profilePhoto", file);
+
+  try {
+    const res = await fetch("http://localhost:5000/api/users/profile-picture", {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`, // JWT token
+      },
+      body: formData,
+    });
+
+    const data = await res.json();
+    console.log("Uploaded user:", data);
+
+  } catch (error) {
+    console.error("Upload error:", error);
+  }
+};
 
   const addSkill = () => {
     if (newSkill && !skills.includes(newSkill)) {
@@ -267,6 +288,7 @@ const Profile = () => {
                 </button>
                 <input
                   type="file"
+                  name="profilePhoto"
                   ref={fileInputRef}
                   onChange={handleImageChange}
                   style={{ display: "none" }}
@@ -281,16 +303,16 @@ const Profile = () => {
                 inputClass="text-center"
               />
 
-              <p className="text-muted mb-1 d-flex justify-content-center align-items-center gap-2">
+              <div className="text-muted mb-1 d-flex justify-content-center align-items-center gap-2">
                 <EditableField
                   value={user.email}
                   field="email"
                   type="email"
                   onSave={updateField}
                 />
-              </p>
+              </div>
 
-              <p className="text-muted d-flex justify-content-center align-items-center gap-2">
+              <div className="text-muted d-flex justify-content-center align-items-center gap-2">
                 <EditableField
                   value={user.phone}
                   field="phone"
@@ -298,7 +320,7 @@ const Profile = () => {
                   placeholder="Add Phone"
                   onSave={updateField}
                 />
-              </p>
+              </div>
             </div>
 
             {/* DETAILS & LINKS */}

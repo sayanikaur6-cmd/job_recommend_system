@@ -29,7 +29,12 @@ router.put(
   ]),
   updateProfile
 );
-
+router.put(
+  "/profile-picture",
+  verifyToken,
+  upload.single("profilePhoto"), // ⚠️ must match frontend + multer
+  userController.setProfilePicture
+);
 // Other routes
 router.get("/:id", userController.getUserById);
 router.put("/update-field", verifyToken,userController.updateSingleField);

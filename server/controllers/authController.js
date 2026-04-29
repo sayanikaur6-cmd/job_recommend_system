@@ -130,3 +130,34 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+exports.googleCallback = async (req, res) => {
+  try {
+    const user = req.user;
+
+    // 🔥 login history save
+    user.login_history.push({
+      ip: req.ip,
+      device: req.headers["user-agent"]
+    });
+
+    await user.save();
+
+    // ✅ Generate JWT token
+    const token = jwt.sign(
+      {
+        id: user._id,
+        user_id: user.user_id,
+        role: user.role
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    // ✅ Redirect with token
+    res.redirect(`${process.env.FRONTEND_URL}/?token=${token}`);
+
+  } catch (error) {
+    console.error("Google Login Error:", error);
+    res.redirect(`${process.env.FRONTEND_URL}/login`);
+  }
+};
