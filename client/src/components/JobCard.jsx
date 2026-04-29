@@ -1,4 +1,8 @@
+import { useNavigate } from "react-router-dom";
+
 export default function JobCard({ job }) {
+  const navigate = useNavigate();
+
   const handleApplyClick = () => {
     const applyLink =
       job.job_apply_link ||
@@ -9,6 +13,10 @@ export default function JobCard({ job }) {
     } else {
       alert("No apply link available for this job.");
     }
+  };
+
+  const handleDetailsClick = () => {
+    navigate("/job-details", { state: { job } }); // 🔥 go to details page
   };
 
   return (
@@ -104,6 +112,8 @@ export default function JobCard({ job }) {
 
         {/* Footer */}
         <div className="d-flex justify-content-between align-items-center mt-3">
+
+          {/* Publisher */}
           <span
             className="badge rounded-pill px-3 py-2"
             style={{
@@ -115,19 +125,34 @@ export default function JobCard({ job }) {
             {job.job_publisher}
           </span>
 
-          <button
-            onClick={handleApplyClick}
-            className="btn rounded-pill px-4"
-            style={{
-              background:
-                "linear-gradient(90deg, #4f46e5, #7c3aed)",
-              color: "white",
-              fontWeight: "600",
-              border: "none",
-            }}
-          >
-            Apply Now
-          </button>
+          {/* 🔥 Buttons */}
+          <div className="d-flex gap-2">
+
+            {/* SEE DETAILS */}
+            <button
+              onClick={handleDetailsClick}
+              className="btn btn-outline-dark btn-sm rounded-pill px-3"
+              style={{ fontWeight: "600" }}
+            >
+              Details
+            </button>
+
+            {/* APPLY */}
+            <button
+              onClick={handleApplyClick}
+              className="btn btn-sm rounded-pill px-3"
+              style={{
+                background:
+                  "linear-gradient(90deg, #4f46e5, #7c3aed)",
+                color: "white",
+                fontWeight: "600",
+                border: "none",
+              }}
+            >
+              Apply
+            </button>
+
+          </div>
         </div>
       </div>
     </div>

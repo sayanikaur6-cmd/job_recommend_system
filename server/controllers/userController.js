@@ -2,7 +2,8 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const getNextSequence = require("../utils/getNextSequence"); // 👈 add this
 const { sendEmail } = require("../utils/emailService");
-
+const fs = require("fs");
+const path = require("path");
 // ===========================
 // Create new user
 // ===========================
@@ -214,5 +215,71 @@ if (req.files?.documents) {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Update failed" });
+  }
+};
+exports.updateSingleField = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { field, value } = req.body;
+
+    const allowedFields = [
+      "name",
+      "email",
+      "phone",
+      "location",
+      "linkedin",
+      "github",
+      "facebook",
+    ];
+
+    if (!allowedFields.includes(field)) {
+      return res.status(400).json({ message: "Invalid field" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { [field]: value },
+      { new: true }
+    );
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+exports.setProfilePicture = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    // 🔹 find user first (old image delete করার জন্য)
+    const user = await User.findById(userId);
+
+    // 🔥 old profile picture delete (if exists)
+    if (user?.profilePic) {
+      const oldPath = path.join(__dirname, "..", user.profilePic);
+
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+
+    // 🔹 dynamic path (OS safe)
+    const profilePicPath = `/${req.file.path.replace(/\\/g, "/")}`;
+
+    // 🔹 update user
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { profilePic: profilePicPath },
+      { new: true }
+    );
+
+    res.status(200).json(updatedUser);
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
