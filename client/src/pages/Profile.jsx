@@ -79,7 +79,7 @@ const Profile = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-
+      console.log("Fetched profile:", data);
       if (res.ok) {
         setUser(data);
         setEditedUser({...data});

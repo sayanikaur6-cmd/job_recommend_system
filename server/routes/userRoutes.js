@@ -6,7 +6,6 @@ const verifyToken = require("../middleware/auth");
 
 // 🔥 NEW IMPORTS
 const upload = require("../middleware/upload");
-const { updateProfile } = require("../controllers/userController");
 // const authMiddleware = require("../middleware/auth");
 
 // Create
@@ -27,7 +26,7 @@ router.put(
     { name: "resume", maxCount: 1 },
     { name: "documents", maxCount: 1 },
   ]),
-  updateProfile
+  userController.updateProfile
 );
 router.put(
   "/profile-picture",
@@ -41,4 +40,7 @@ router.put("/update-field", verifyToken,userController.updateSingleField);
 
 router.put("/:id", userController.updateSingleField);
 router.delete("/:id", userController.deleteUser);
+// for adding skills to user profile
+router.post("/skills",verifyToken, userController.addSkills);
+router.post("/remskills",verifyToken, userController.removeSkills);
 module.exports = router;

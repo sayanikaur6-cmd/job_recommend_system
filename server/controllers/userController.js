@@ -99,7 +99,7 @@ exports.getAllUsers = async (req, res) => {
 };
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.id).select("-password").populate("skills");
     res.json(user);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -285,6 +285,50 @@ exports.setProfilePicture = async (req, res) => {
 
     res.status(200).json(updatedUser);
 
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+// add skills to profile
+exports.addSkills = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { skills } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const existingSkills = user.skills || [];
+
+    user.skills = [...new Set([...existingSkills, ...skills])];
+
+    await user.save();
+
+    res.json({
+      message: "Skills added successfully",
+      skills: user.skills
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}; 
+exports.removeSkills = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { skills } = req.body;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    user.skills = user.skills.filter(s => !skills.includes(s.toString()));
+    await user.save();
+    res.json({
+      message: "Skills removed successfully",
+      skills: user.skills
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
