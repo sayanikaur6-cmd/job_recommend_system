@@ -6,11 +6,6 @@ const verifyToken = require("../middleware/auth");
 
 // const auth = require("../middleware/auth");
 const upload = require("../middleware/upload");
-// const { uploadResume } = require("../controllers/userController");
-
-// 🔥 NEW IMPORTS
-// const upload = require("../middleware/upload");
-// const { updateProfile } = require("../controllers/userController");
 // const authMiddleware = require("../middleware/auth");
 
 // Create
@@ -46,9 +41,17 @@ router.put(
   upload.single("resume"),  // 👈 multer (MUST MATCH)
   userController.uploadResume              // 👈 controller
 );
+router.put(
+  "/delete/resume",
+  verifyToken,
+  userController.deleteResume
+);
 // Other routes
 router.get("/:id", userController.getUserById);
 router.put("/update-field", verifyToken,userController.updateSingleField);
 router.put("/:id", userController.updateSingleField);
 router.delete("/:id", userController.deleteUser);
+// for adding skills to user profile
+router.post("/skills",verifyToken, userController.addSkills);
+router.post("/remskills",verifyToken, userController.removeSkills);
 module.exports = router;

@@ -79,7 +79,7 @@ const Profile = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-
+      console.log("Fetched profile:", data);
       if (res.ok) {
         setUser(data);
         setEditedUser({...data});
@@ -166,6 +166,8 @@ const Profile = () => {
   };
 
   const handleProfileSave = async () => {
+    window.location.reload();
+    return;
     const updatedData = { ...editedUser, skills, education, experience };
     if (imageFile) {
       const formData = new FormData();

@@ -3,7 +3,7 @@ import { useRef } from "react";
 const Resume = ({ user, theme, setUser }) => {
   const fileRef = useRef();
 
-  // 🔥 upload handler
+  // 🔥 UPLOAD
   const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -28,9 +28,40 @@ const Resume = ({ user, theme, setUser }) => {
       const data = await res.json();
 
       if (res.ok) {
-        setUser(data); // 🔥 instantly update UI
+        setUser(data);
       } else {
         alert("Upload failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Server error");
+    }
+  };
+
+  // 🔥 DELETE
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm("Delete resume?");
+    if (!confirmDelete) return;
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/users/delete/resume",
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setUser(data);
+      } else {
+        alert("Delete failed");
       }
     } catch (err) {
       console.error(err);
@@ -49,25 +80,38 @@ const Resume = ({ user, theme, setUser }) => {
       <div className="d-flex justify-content-between align-items-center">
         <h5 className="fw-bold text-white mb-0">My Resume</h5>
 
-        <div className="d-flex gap-2">
-          {/* 🔥 Upload Button */}
-          <button
-            className="btn btn-light fw-bold text-primary px-3"
+        <div className="d-flex gap-3 align-items-center">
+          {/* 🔥 UPLOAD ICON */}
+          <i
+            className="bi bi-upload text-white"
+            style={{ cursor: "pointer", fontSize: "20px" }}
+            title="Upload Resume"
             onClick={() => fileRef.current.click()}
-          >
-            Upload
-          </button>
+          ></i>
 
-          {/* 🔥 View Button */}
+          {/* 🔥 VIEW ICON */}
           {user?.resume && (
             <a
               href={`http://localhost:5000${user.resume}`}
               target="_blank"
               rel="noreferrer"
-              className="btn btn-light fw-bold text-primary px-4 shadow-sm"
+              title="View Resume"
             >
-              View PDF
+              <i
+                className="bi bi-eye text-white"
+                style={{ fontSize: "20px" }}
+              ></i>
             </a>
+          )}
+
+          {/* 🔥 DELETE ICON */}
+          {user?.resume && (
+            <i
+              className="bi bi-trash text-white"
+              style={{ cursor: "pointer", fontSize: "20px" }}
+              title="Delete Resume"
+              onClick={handleDelete}
+            ></i>
           )}
         </div>
       </div>

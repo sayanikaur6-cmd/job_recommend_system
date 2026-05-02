@@ -25,6 +25,7 @@ app.use("/api/jobs", require("./routes/jobRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/role", require("./routes/roleRoutes"));
+app.use("/api/skill", require("./routes/skillRoutes"));
 app.use("/uploads", express.static("uploads"));
 
 
