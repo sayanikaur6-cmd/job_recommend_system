@@ -7,10 +7,13 @@ const roleSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    skills: {
-      type: [String], // array of strings
-      required: true,
-    },
+    skills: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Skill",   // 🔥 skills collection reference
+        required: true
+      }
+    ]
   },
   {
     timestamps: true,

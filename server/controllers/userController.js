@@ -219,17 +219,20 @@ if (req.files?.documents) {
 };
 exports.updateSingleField = async (req, res) => {
   try {
-    const userId = req.user.id;
+    // console.log("REQ.USER:", req.user); // 🔥 DEBUG
+
+    const userId = req.user?._id || req.user?.id; // 🔥 FIX
+
     const { field, value } = req.body;
 
     const allowedFields = [
       "name",
-      "email",
       "phone",
+      "email",
       "location",
+      "dob",
       "linkedin",
       "github",
-      "facebook",
     ];
 
     if (!allowedFields.includes(field)) {
@@ -242,9 +245,12 @@ exports.updateSingleField = async (req, res) => {
       { new: true }
     );
 
-    res.status(200).json(updatedUser);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    // console.log("UPDATED:", updatedUser);
+
+    res.json(updatedUser);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error updating field" });
   }
 };
 exports.setProfilePicture = async (req, res) => {

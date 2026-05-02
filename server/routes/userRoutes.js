@@ -38,6 +38,7 @@ router.put(
 // Other routes
 router.get("/:id", userController.getUserById);
 router.put("/update-field", verifyToken,userController.updateSingleField);
+
 router.put("/:id", userController.updateSingleField);
 router.delete("/:id", userController.deleteUser);
 module.exports = router;

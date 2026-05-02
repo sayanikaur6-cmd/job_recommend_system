@@ -99,7 +99,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
-
+  dob: { type: String },
   // 🔥 FILE STORAGE
 
   profilePic: {
