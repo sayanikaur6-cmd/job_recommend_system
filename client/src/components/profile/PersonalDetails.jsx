@@ -1,103 +1,169 @@
-const PersonalDetails = ({ editedUser, setEditedUser, theme, updateField, user }) => {
-    return (
-        <div
-            className="card border-0 p-4 mb-4 shadow-sm"
-            style={{ borderRadius: "20px", background: theme.cardBg }}
+import { useState, useRef } from "react";
+
+const PersonalDetails = ({
+  editedUser,
+  setEditedUser,
+  theme,
+  updateField,
+  setUser,
+}) => {
+  const inputRefs = useRef({});
+
+  const [editMode, setEditMode] = useState({
+    location: false,
+    linkedin: false,
+    github: false,
+  });
+
+  // ✅ URL validation
+  const isValidURL = (url) => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // ✅ SAVE + DISABLE
+  const handleBlur = async (field) => {
+    const value = editedUser[field];
+
+    if ((field === "linkedin" || field === "github") && value) {
+      if (!isValidURL(value)) {
+        alert("Enter valid URL");
+        return;
+      }
+    }
+
+    try {
+      const updatedUser = await updateField(field, value);
+
+      if (updatedUser) {
+        setUser(updatedUser);
+        setEditedUser(updatedUser);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+
+    if (field !== "dob") {
+      setEditMode((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
+  // ✅ enable edit
+  const enableEdit = (field) => {
+    setEditMode((prev) => ({ ...prev, [field]: true }));
+
+    setTimeout(() => {
+      inputRefs.current[field]?.focus();
+    }, 0);
+  };
+
+  // ✅ NORMAL FIELD
+  const renderField = (field, icon, type = "text", label) => (
+    <div className="mb-3">
+      <label className="small fw-bold text-muted">{label}</label>
+
+      <div className="input-group">
+        <span
+          className="input-group-text bg-light border-0"
+          style={{ cursor: "pointer" }}
+          onClick={() => enableEdit(field)}
         >
-            <h6
-                className="fw-bold mb-3"
-                style={{ color: theme.primaryPurple }}
-            >
-                Personal Details
-            </h6>
-            <div className="mb-3">
-                <label className="small fw-bold text-muted">Location</label>
-                <div className="input-group">
-                    <span className="input-group-text bg-light border-0">
-                        <i
-                            className="bi bi-geo-alt-fill"
-                            style={{ color: theme.accentBlue }}
-                        ></i>
-                    </span>
-                    <input
-                        type="text"
-                        className="form-control bg-light border-0"
-                        value={editedUser.location}
-                        onChange={(e) =>
-                            setEditedUser({ ...editedUser, location: e.target.value })
-                        }
-                    />
-                </div>
-            </div>
-            <div className="mb-3">
-                <label className="small fw-bold text-muted">
-                    Date of Birth
-                </label>
-                <div className="input-group">
-                    <span className="input-group-text bg-light border-0">
-                        <i
-                            className="bi bi-calendar3"
-                            style={{ color: theme.accentBlue }}
-                        ></i>
-                    </span>
+          <i className={icon} style={{ color: theme.accentBlue }}></i>
+        </span>
 
-                    <input
-                        type="date"
-                        className="form-control bg-light border-0"
-                        value={user.dob || ""}
-                        max={new Date().toISOString().split("T")[0]} // future date block
-                        onChange={async (e) => {
-                            const newDob = e.target.value;
+        <input
+          ref={(el) => (inputRefs.current[field] = el)}
+          type={type}
+          disabled={!editMode[field]}
+          className="form-control bg-light border-0"
+          value={editedUser[field] || ""}
+          onChange={(e) =>
+            setEditedUser({
+              ...editedUser,
+              [field]: e.target.value,
+            })
+          }
+          onBlur={() => handleBlur(field)}
+        />
 
-                            // UI instant update
-                            setUser((prev) => ({ ...prev, dob: newDob }));
+        <span
+          className="input-group-text bg-light border-0"
+          style={{ cursor: "pointer" }}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => enableEdit(field)}
+        >
+          <i className="bi bi-pencil"></i>
+        </span>
+      </div>
+    </div>
+  );
 
-                            // backend update
-                            await updateField("dob", newDob);
-                        }}
-                    />
-                </div>
-            </div>
+  // ✅ DOB FIELD WITH ICON INSIDE
+  const renderDOB = () => (
+    <div className="mb-3">
+      <label className="small fw-bold text-muted">Date of Birth</label>
 
-            <h6
-                className="fw-bold mt-4 mb-3"
-                style={{ color: theme.primaryPurple }}
-            >
-                Social Links
-            </h6>
-            <div className="input-group mb-2">
-                <span className="input-group-text bg-light border-0">
-                    <i
-                        className="bi bi-linkedin"
-                        style={{ color: "#0077b5" }}
-                    ></i>
-                </span>
-                <input
-                    type="url"
-                    className="form-control bg-light border-0"
-                    placeholder="LinkedIn"
-                    value={editedUser.linkedin}
-                    onChange={(e) =>
-                        setEditedUser({ ...editedUser, linkedin: e.target.value })
-                    }
-                />
-            </div>
-            <div className="input-group mb-2">
-                <span className="input-group-text bg-light border-0">
-                    <i className="bi bi-github" style={{ color: "#333" }}></i>
-                </span>
-                <input
-                    type="url"
-                    className="form-control bg-light border-0"
-                    placeholder="GitHub"
-                    value={editedUser.github}
-                    onChange={(e) =>
-                        setEditedUser({ ...editedUser, github: e.target.value })
-                    }
-                />
-            </div>
-        </div>
-    );
+      <div className="position-relative">
+        {/* 🔵 ICON INSIDE INPUT */}
+        <i
+          className="bi bi-calendar3"
+          style={{
+            position: "absolute",
+            left: "12px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "#0ea5e9", // blue
+            pointerEvents: "none",
+          }}
+        ></i>
+
+        <input
+          type="date"
+          className="form-control bg-light border-0"
+          style={{ paddingLeft: "40px" }} // space for icon
+          value={editedUser.dob || ""}
+          onChange={(e) =>
+            setEditedUser({
+              ...editedUser,
+              dob: e.target.value,
+            })
+          }
+          onBlur={() => handleBlur("dob")}
+        />
+      </div>
+    </div>
+  );
+
+  return (
+    <div
+      className="card border-0 p-4 mb-4 shadow-sm"
+      style={{ borderRadius: "20px", background: theme.cardBg }}
+    >
+      <h6 className="fw-bold mb-3" style={{ color: theme.primaryPurple }}>
+        Personal Details
+      </h6>
+
+      {/* 📍 LOCATION */}
+      {renderField("location", "bi bi-geo-alt-fill", "text", "Location")}
+
+      {/* 📅 DOB */}
+      {renderDOB()}
+
+      <h6 className="fw-bold mt-4 mb-3" style={{ color: theme.primaryPurple }}>
+        Social Links
+      </h6>
+
+      {/* 🔗 LinkedIn */}
+      {renderField("linkedin", "bi bi-linkedin", "url", "LinkedIn")}
+
+      {/* 🐙 GitHub */}
+      {renderField("github", "bi bi-github", "url", "GitHub")}
+    </div>
+  );
 };
 
 export default PersonalDetails;

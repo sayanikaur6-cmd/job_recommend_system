@@ -4,9 +4,13 @@ const router = express.Router();
 const userController = require("../controllers/userController");
 const verifyToken = require("../middleware/auth");
 
-// 🔥 NEW IMPORTS
+// const auth = require("../middleware/auth");
 const upload = require("../middleware/upload");
-const { updateProfile } = require("../controllers/userController");
+// const { uploadResume } = require("../controllers/userController");
+
+// 🔥 NEW IMPORTS
+// const upload = require("../middleware/upload");
+// const { updateProfile } = require("../controllers/userController");
 // const authMiddleware = require("../middleware/auth");
 
 // Create
@@ -27,13 +31,20 @@ router.put(
     { name: "resume", maxCount: 1 },
     { name: "documents", maxCount: 1 },
   ]),
-  updateProfile
+  userController.updateProfile
 );
 router.put(
   "/profile-picture",
   verifyToken,
   upload.single("profilePhoto"), // ⚠️ must match frontend + multer
   userController.setProfilePicture
+);
+// 🔥 IMPORTANT ROUTE
+router.put(
+  "/upload/resume",
+  verifyToken,                     // 👈 login user লাগবে
+  upload.single("resume"),  // 👈 multer (MUST MATCH)
+  userController.uploadResume              // 👈 controller
 );
 // Other routes
 router.get("/:id", userController.getUserById);

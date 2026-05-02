@@ -82,7 +82,7 @@ const Profile = () => {
 
       if (res.ok) {
         setUser(data);
-        setEditedUser({ ...data });
+        setEditedUser({...data});
         setSkills(data.skills || []);
         setEducation(data.education || []);
         setExperience(data.experience || []);
@@ -217,28 +217,24 @@ const Profile = () => {
       alert("Server error.");
     }
   };
-  const updateField = async (field, value) => {
-    try {
-      const token = localStorage.getItem("token");
+const updateField = async (field, value) => {
+  const token = localStorage.getItem("token");
 
-      const res = await fetch("http://localhost:5000/api/users/update-field", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ field, value }),
-      });
+  const res = await fetch("http://localhost:5000/api/users/update-field", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ field, value }),
+  });
 
-      const data = await res.json();
-
-      if (res.ok) {
-        setUser((prev) => ({ ...prev, [field]: value }));
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const data = await res.json();
+  if (res.ok) {
+    setUser((prev) => ({ ...prev, [field]: value }));
+  }
+  return data;
+};
   return (
     <div
       style={{
@@ -375,7 +371,7 @@ const Profile = () => {
             <Experience experience={experience} theme={theme}/>
 
             {/* RESUME */}
-            <Resume user={user} theme={theme}/>
+            <Resume user={user} theme={theme} setUser={setUser}/>
           </div>
         </div>
       </div>

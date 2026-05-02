@@ -1,3 +1,6 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
 const Skills = ({ skills, setSkills, newSkill, setNewSkill, theme ,availableSkills}) => {
   const addSkill = () => {
     if (newSkill && !skills.includes(newSkill)) {
