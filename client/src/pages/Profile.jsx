@@ -370,7 +370,12 @@ const updateField = async (field, value) => {
             />
 
             {/* EXPERIENCE */}
-            <Experience experience={experience} theme={theme}/>
+      <Experience
+  experience={experience}
+  setExperience={setExperience}
+  theme={theme}
+  user={user}
+/>
 
             {/* RESUME */}
             <Resume user={user} theme={theme} setUser={setUser}/>
