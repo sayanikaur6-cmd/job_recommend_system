@@ -179,6 +179,8 @@ const Profile = () => {
   };
 
   const handleProfileSave = async () => {
+    window.location.reload();
+    return;
     const updatedData = { ...editedUser, skills, education, experience };
     if (imageFile) {
       const formData = new FormData();
@@ -381,10 +383,15 @@ const updateField = async (field, value) => {
             />
 
             {/* EXPERIENCE */}
-            <Experience experience={experience} theme={theme}/>
+      <Experience
+  experience={experience}
+  setExperience={setExperience}
+  theme={theme}
+  user={user}
+/>
 
             {/* RESUME */}
-            <Resume user={user} theme={theme}/>
+            <Resume user={user} theme={theme} setUser={setUser}/>
           </div>
         </div>
       </div>

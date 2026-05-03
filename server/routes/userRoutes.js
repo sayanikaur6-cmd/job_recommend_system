@@ -4,7 +4,7 @@ const router = express.Router();
 const userController = require("../controllers/userController");
 const verifyToken = require("../middleware/auth");
 
-// 🔥 NEW IMPORTS
+// const auth = require("../middleware/auth");
 const upload = require("../middleware/upload");
 // const authMiddleware = require("../middleware/auth");
 
@@ -34,10 +34,21 @@ router.put(
   upload.single("profilePhoto"), // ⚠️ must match frontend + multer
   userController.setProfilePicture
 );
+// 🔥 IMPORTANT ROUTE
+router.put(
+  "/upload/resume",
+  verifyToken,                     // 👈 login user লাগবে
+  upload.single("resume"),  // 👈 multer (MUST MATCH)
+  userController.uploadResume              // 👈 controller
+);
+router.put(
+  "/delete/resume",
+  verifyToken,
+  userController.deleteResume
+);
 // Other routes
 router.get("/:id", userController.getUserById);
 router.put("/update-field", verifyToken,userController.updateSingleField);
-
 router.put("/:id", userController.updateSingleField);
 router.delete("/:id", userController.deleteUser);
 // for adding skills to user profile
