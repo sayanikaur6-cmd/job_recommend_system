@@ -19,7 +19,7 @@ export default function AnimatedSearch() {
 
       navigate("/search-results", {
         state: {
-          jobs: results,
+          jobs: results.jobs,
           query: query,
         },
       });

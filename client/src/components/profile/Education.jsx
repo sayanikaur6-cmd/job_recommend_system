@@ -1,5 +1,9 @@
 import { useState } from "react";
-
+import {
+  addEducation,
+  updateEducation,
+  deleteEducation,
+} from "../../api/educationApi";
 const emptyEdu = {
   degree: "",
   institution: "",
@@ -13,7 +17,46 @@ const Education = ({ education = [], setEducation, theme }) => {
   const [formOpen, setFormOpen] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
   const [formData, setFormData] = useState(emptyEdu);
+  const handleSave = async () => {
+    if (!formData.degree.trim() || !formData.institution.trim()) {
+      alert("Degree and Institution are required");
+      return;
+    }
 
+    try {
+      if (editIndex !== null) {
+        const id = education[editIndex]._id;
+
+        const updatedEdu = await updateEducation(id, formData);
+
+        const updated = [...education];
+        updated[editIndex] = updatedEdu;
+        setEducation(updated);
+      } else {
+        const newEdu = await addEducation(formData);
+        setEducation([newEdu, ...education]);
+      }
+
+      closeForm();
+    } catch (error) {
+      console.log(error);
+      alert("Education save failed");
+    }
+  };
+  const removeEducation = async (index) => {
+    if (!window.confirm("Delete this education?")) return;
+
+    try {
+      const id = education[index]._id;
+
+      await deleteEducation(id);
+
+      setEducation(education.filter((_, i) => i !== index));
+    } catch (error) {
+      console.log(error);
+      alert("Education delete failed");
+    }
+  };
   const openAddForm = () => {
     setEditIndex(null);
     setFormData(emptyEdu);
@@ -32,27 +75,27 @@ const Education = ({ education = [], setEducation, theme }) => {
     setFormData(emptyEdu);
   };
 
-  const handleSave = () => {
-    if (!formData.degree.trim() || !formData.institution.trim()) {
-      alert("Degree and Institution are required");
-      return;
-    }
+  // const handleSave = () => {
+  //   if (!formData.degree.trim() || !formData.institution.trim()) {
+  //     alert("Degree and Institution are required");
+  //     return;
+  //   }
 
-    if (editIndex !== null) {
-      const updated = [...education];
-      updated[editIndex] = formData;
-      setEducation(updated);
-    } else {
-      setEducation([formData, ...education]);
-    }
+  //   if (editIndex !== null) {
+  //     const updated = [...education];
+  //     updated[editIndex] = formData;
+  //     setEducation(updated);
+  //   } else {
+  //     setEducation([formData, ...education]);
+  //   }
 
-    closeForm();
-  };
+  //   closeForm();
+  // };
 
-  const removeEducation = (index) => {
-    if (!window.confirm("Delete this education?")) return;
-    setEducation(education.filter((_, i) => i !== index));
-  };
+  // const removeEducation = (index) => {
+  //   if (!window.confirm("Delete this education?")) return;
+  //   setEducation(education.filter((_, i) => i !== index));
+  // };
 
   const inputStyle = {
     border: "1px solid #e2e8f0",

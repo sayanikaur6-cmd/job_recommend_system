@@ -6,6 +6,7 @@ import Skills from "../components/profile/Skills";
 import Education from "../components/profile/Education";
 import Resume from "../components/profile/Resume";
 import PersonalDetails from "../components/profile/PersonalDetails";
+import { getEducations } from "../api/educationApi";
 const Profile = () => {
   const [user, setUser] = useState(null);
 
@@ -84,13 +85,25 @@ const Profile = () => {
         setUser(data);
         setEditedUser({...data});
         setSkills(data.skills || []);
-        setEducation(data.education || []);
+        // setEducation(data.education || []);
         setExperience(data.experience || []);
       }
     };
     fetchProfile();
   }, []);
 
+  useEffect(() => {
+    const fetchEducation = async () => {
+      try {
+        const data = await getEducations();
+        setEducation(data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchEducation();
+  }, []);
   if (!user)
     return (
       <div className="text-center mt-5">
@@ -149,7 +162,7 @@ const Profile = () => {
       setNewEdu({ degree: "", institution: "", year: "" });
     }
   };
-
+  
   const removeEducation = (index) => {
     setEducation(education.filter((_, i) => i !== index));
   };

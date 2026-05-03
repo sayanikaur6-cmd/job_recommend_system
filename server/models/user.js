@@ -72,10 +72,16 @@ const userSchema = new mongoose.Schema({
     }
   ],
 
-  education: {
-    type: String,
-    default: ""
+  education: [
+  {
+    degree: { type: String },
+    institution: { type: String },
+    year: { type: String },
+    grade: { type: String },
+    location: { type: String },
+    description: { type: String },
   },
+],
 
   experience: {
     type: String,

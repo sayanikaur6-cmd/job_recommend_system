@@ -144,9 +144,22 @@ exports.searchJobs = async (req, res) => {
     }
 
     // 🔥 bulk insert
-    if (newJobs.length > 0) {
-      await Job.insertMany(newJobs, { ordered: false });
-      console.log(`✅ ${newJobs.length} new jobs saved`);
+    // Step 1: get all incoming job_ids
+    const jobIds = newJobs.map(job => job.job_id);
+
+    // Step 2: find existing jobs
+    const existingJobs = await Job.find({ job_id: { $in: jobIds } });
+
+    // Step 3: create set of existing IDs
+    const existingIds = new Set(existingJobs.map(job => job.job_id));
+
+    // Step 4: filter new jobs
+    const filteredJobs = newJobs.filter(job => !existingIds.has(job.job_id));
+
+    // Step 5: insert only new ones
+    if (filteredJobs.length > 0) {
+      await Job.insertMany(filteredJobs);
+      console.log(`✅ ${filteredJobs.length} new jobs saved`);
     }
 
     res.json({
