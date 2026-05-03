@@ -333,3 +333,45 @@ exports.removeSkills = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+// 🔥 UPLOAD RESUME CONTROLLER
+exports.uploadResume = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // ❗ file না থাকলে error
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    // 🔥 file path
+    const filePath = `/uploads/resume/${req.file.filename}`;
+
+    // 🔥 update DB
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { resume: filePath },
+      { returnDocument: "after" } // ✅ mongoose warning fix
+    );
+
+    res.status(200).json(updatedUser);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Upload failed" });
+  }
+};
+exports.deleteResume = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { resume: "" },
+      { returnDocument: "after" }
+    );
+
+    res.json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ message: "Delete failed" });
+  }
+};
