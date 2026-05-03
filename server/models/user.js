@@ -71,21 +71,14 @@ const userSchema = new mongoose.Schema({
       ref: "Skill"
     }
   ],
-
-  education: [
-  {
-    degree: { type: String },
-    institution: { type: String },
-    year: { type: String },
-    grade: { type: String },
-    location: { type: String },
-    description: { type: String },
-  },
-],
-
-  experience: {
+  otp: {
     type: String,
-    default: ""
+    default: null
+  },
+
+  otp_expiry: {
+    type: Date,
+    default: null
   },
 
   preferredRole: {
