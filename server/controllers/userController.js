@@ -2,7 +2,8 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const getNextSequence = require("../utils/getNextSequence"); // 👈 add this
 const { sendEmail } = require("../utils/emailService");
-
+const fs = require("fs");
+const path = require("path");
 // ===========================
 // Create new user
 // ===========================
@@ -98,7 +99,7 @@ exports.getAllUsers = async (req, res) => {
 };
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.id).select("-password").populate("skills");
     res.json(user);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -214,5 +215,163 @@ if (req.files?.documents) {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Update failed" });
+  }
+};
+exports.updateSingleField = async (req, res) => {
+  try {
+    // console.log("REQ.USER:", req.user); // 🔥 DEBUG
+
+    const userId = req.user?._id || req.user?.id; // 🔥 FIX
+
+    const { field, value } = req.body;
+
+    const allowedFields = [
+      "name",
+      "phone",
+      "email",
+      "location",
+      "dob",
+      "linkedin",
+      "github",
+    ];
+
+    if (!allowedFields.includes(field)) {
+      return res.status(400).json({ message: "Invalid field" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { [field]: value },
+      { new: true }
+    );
+
+    // console.log("UPDATED:", updatedUser);
+
+    res.json(updatedUser);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error updating field" });
+  }
+};
+exports.setProfilePicture = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    // 🔹 find user first (old image delete করার জন্য)
+    const user = await User.findById(userId);
+
+    // 🔥 old profile picture delete (if exists)
+    if (user?.profilePic) {
+      const oldPath = path.join(__dirname, "..", user.profilePic);
+
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+
+    // 🔹 dynamic path (OS safe)
+    const profilePicPath = `/${req.file.path.replace(/\\/g, "/")}`;
+
+    // 🔹 update user
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { profilePic: profilePicPath },
+      { new: true }
+    );
+
+    res.status(200).json(updatedUser);
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+// add skills to profile
+exports.addSkills = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { skills } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const existingSkills = user.skills || [];
+
+    user.skills = [...new Set([...existingSkills, ...skills])];
+
+    await user.save();
+
+    res.json({
+      message: "Skills added successfully",
+      skills: user.skills
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}; 
+exports.removeSkills = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { skills } = req.body;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    user.skills = user.skills.filter(s => !skills.includes(s.toString()));
+    await user.save();
+    res.json({
+      message: "Skills removed successfully",
+      skills: user.skills
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+// 🔥 UPLOAD RESUME CONTROLLER
+exports.uploadResume = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // ❗ file না থাকলে error
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    // 🔥 file path
+    const filePath = `/uploads/resume/${req.file.filename}`;
+
+    // 🔥 update DB
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { resume: filePath },
+      { returnDocument: "after" } // ✅ mongoose warning fix
+    );
+
+    res.status(200).json(updatedUser);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Upload failed" });
+  }
+};
+exports.deleteResume = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { resume: "" },
+      { returnDocument: "after" }
+    );
+
+    res.json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ message: "Delete failed" });
   }
 };

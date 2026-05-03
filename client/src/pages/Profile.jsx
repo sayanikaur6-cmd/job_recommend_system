@@ -1,210 +1,397 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-
+import EditableField from "../components/EditableField";
+import Experience from "../components/profile/Experience";
+import Skills from "../components/profile/Skills";
+import Education from "../components/profile/Education";
+import Resume from "../components/profile/Resume";
+import PersonalDetails from "../components/profile/PersonalDetails";
+import { getEducations } from "../api/educationApi";
 const Profile = () => {
   const [user, setUser] = useState(null);
+
+  // -- Edit Mode States --
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+
+  // -- Form States --
+  const [editedUser, setEditedUser] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    dob: "",
+    linkedin: "",
+    github: "",
+    facebook: "",
+  });
+  const [skills, setSkills] = useState([]);
+  const [education, setEducation] = useState([]);
+  const [experience, setExperience] = useState([]);
+
+  // States for adding *new* items
+  const [newSkill, setNewSkill] = useState("");
+  const [newEdu, setNewEdu] = useState({
+    degree: "",
+    institution: "",
+    year: "",
+  });
+  const [newExp, setNewExp] = useState({
+    role: "",
+    company: "",
+    startDate: "",
+    endDate: "",
+  });
+
+  // -- Profile Photo Handling --
+  const fileInputRef = useRef(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+
   const navigate = useNavigate();
+  const availableSkills = [
+    "React",
+    "Node.js",
+    "MongoDB",
+    "Python",
+    "Java",
+    "SQL",
+    "DevOps",
+    "UI/UX",
+    "C++",
+  ];
+
+  // Custom Styles for the Purple/Blue Theme
+  const theme = {
+    bg: "#f8faff",
+    cardBg: "#ffffff",
+    primaryPurple: "#6366f1", // Indigo/Purple
+    accentBlue: "#0ea5e9", // Light Blue
+    textDark: "#1e293b",
+    textLight: "#64748b",
+    border: "#e2e8f0",
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem("token");
-
-        const res = await fetch("http://localhost:5000/api/users/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          setUser(data);
-        } else {
-          console.error(data.message);
-        }
-      } catch (err) {
-        console.error(err);
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/users/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      console.log("Fetched profile:", data);
+      if (res.ok) {
+        setUser(data);
+        setEditedUser({...data});
+        setSkills(data.skills || []);
+        // setEducation(data.education || []);
+        setExperience(data.experience || []);
       }
     };
-
     fetchProfile();
   }, []);
 
-  if (!user) {
+  useEffect(() => {
+    const fetchEducation = async () => {
+      try {
+        const data = await getEducations();
+        setEducation(data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchEducation();
+  }, []);
+  if (!user)
     return (
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{
-          minHeight: "100vh",
-          background:
-            "linear-gradient(135deg, #4c51bf 0%, #6b46c1 50%, #2b6cb0 100%)",
-        }}
-      >
-        <div
-          className="spinner-border text-light"
-          style={{ width: "3rem", height: "3rem" }}
-        ></div>
+      <div className="text-center mt-5">
+        <h4 style={{ color: theme.primaryPurple }}>Loading Dashboard...</h4>
       </div>
     );
-  }
 
+  // --- Handlers (Logic remains unchanged) ---
+  const handleImageChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const token = localStorage.getItem("token");
+  // 🔹 preview (তোরটা ঠিক আছে)
+  setImageFile(file);
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    setSelectedImage(reader.result);
+  };
+  reader.readAsDataURL(file);
+
+  // 🔥 backend upload
+  const formData = new FormData();
+  formData.append("profilePhoto", file);
+
+  try {
+    const res = await fetch("http://localhost:5000/api/users/profile-picture", {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`, // JWT token
+      },
+      body: formData,
+    });
+
+    const data = await res.json();
+    console.log("Uploaded user:", data);
+
+  } catch (error) {
+    console.error("Upload error:", error);
+  }
+};
+
+  const addSkill = () => {
+    if (newSkill && !skills.includes(newSkill)) {
+      setSkills([...skills, newSkill]);
+      setNewSkill("");
+    }
+  };
+
+  const removeSkill = (skill) => {
+    setSkills(skills.filter((s) => s !== skill));
+  };
+
+  const addEducation = () => {
+    if (newEdu.degree && newEdu.institution) {
+      setEducation([...education, newEdu]);
+      setNewEdu({ degree: "", institution: "", year: "" });
+    }
+  };
+  
+  const removeEducation = (index) => {
+    setEducation(education.filter((_, i) => i !== index));
+  };
+
+  const addExperience = () => {
+    if (newExp.role && newExp.company) {
+      setExperience([...experience, newExp]);
+      setNewExp({ role: "", company: "", startDate: "", endDate: "" });
+    }
+  };
+
+  const removeExperience = (index) => {
+    setExperience(experience.filter((_, i) => i !== index));
+  };
+
+  const handleProfileSave = async () => {
+    window.location.reload();
+    return;
+    const updatedData = { ...editedUser, skills, education, experience };
+    if (imageFile) {
+      const formData = new FormData();
+      formData.append("profilePic", imageFile);
+      try {
+        const token = localStorage.getItem("token");
+        const imgRes = await fetch(
+          "http://localhost:5000/api/users/upload/profilepic",
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+          },
+        );
+        const imgData = await imgRes.json();
+        if (imgRes.ok) {
+          updatedData.profilePic = imgData.profilePic;
+        } else {
+          alert("Failed to upload image.");
+          return;
+        }
+      } catch (error) {
+        console.error("Image upload error:", error);
+        return;
+      }
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/users/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedData),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data);
+        alert("Profile Updated Successfully!");
+        setIsEditingName(false);
+        setIsEditingEmail(false);
+        setIsEditingPhone(false);
+        setImageFile(null);
+        setSelectedImage(null);
+      }
+    } catch (error) {
+      alert("Server error.");
+    }
+  };
+const updateField = async (field, value) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch("http://localhost:5000/api/users/update-field", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ field, value }),
+  });
+
+  const data = await res.json();
+  if (res.ok) {
+    setUser((prev) => ({ ...prev, [field]: value }));
+  }
+  return data;
+};
   return (
     <div
       style={{
         minHeight: "100vh",
-        backgroundImage:
-          "url('https://images.unsplash.com/photo-1521791136064-7986c2920216')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
+        background: theme.bg,
+        color: theme.textDark,
         padding: "40px 20px",
+        fontFamily: "'Inter', sans-serif",
       }}
     >
       <div className="container">
-        <div className="row justify-content-center">
-          <div className="col-lg-5">
+        <div className="row">
+          {/* LEFT COLUMN */}
+          <div className="col-md-4">
+            {/* PROFILE CARD */}
             <div
-              className="text-center p-4"
-              style={{
-                borderRadius: "28px",
-                background: "rgba(76,81,191,0.22)",
-                backdropFilter: "blur(18px)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                boxShadow: "0 15px 50px rgba(0,0,0,0.25)",
-                color: "#fff",
-                transition: "all 0.35s ease",
-                animation: "fadeIn 0.8s ease",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.transform =
-                  "translateY(-6px) scale(1.02)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.transform = "translateY(0px) scale(1)")
-              }
+              className="card border-0 p-4 text-center mb-4 shadow-sm"
+              style={{ borderRadius: "20px", background: theme.cardBg }}
             >
-              {/* Cover mini glow */}
-              <div
-                style={{
-                  height: "90px",
-                  borderRadius: "20px",
-                  background:
-                    "linear-gradient(90deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08))",
-                  marginBottom: "20px",
-                }}
-              ></div>
+              <div className="position-relative d-inline-block mx-auto mb-3">
+                <img
+                  src={
+                    selectedImage
+                      ? selectedImage
+                      : user.profilePic
+                        ? `http://localhost:5000${user.profilePic}`
+                        : "https://via.placeholder.com/150"
+                  }
+                  className="rounded-circle p-1"
+                  style={{
+                    border: `3px solid ${theme.primaryPurple}`,
+                    objectFit: "cover",
+                  }}
+                  width="130"
+                  height="130"
+                  alt="Profile"
+                />
+                <button
+                  className="btn btn-sm position-absolute shadow"
+                  style={{
+                    bottom: "5px",
+                    right: "5px",
+                    background: theme.primaryPurple,
+                    color: "#fff",
+                    borderRadius: "50%",
+                    width: "35px",
+                    height: "35px",
+                  }}
+                  onClick={() => fileInputRef.current.click()}
+                >
+                  <i className="bi bi-camera-fill"></i>
+                </button>
+                <input
+                  type="file"
+                  name="profilePhoto"
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                  style={{ display: "none" }}
+                />
+              </div>
 
-              {/* Profile Photo */}
-              <img
-                src={
-                  user.profilePic
-                    ? `http://localhost:5000${user.profilePic}`
-                    : "https://via.placeholder.com/140"
-                }
-                alt="profile"
-                className="rounded-circle"
-                width="140"
-                height="140"
-                style={{
-                  border: "5px solid #fff",
-                  objectFit: "cover",
-                  marginTop: "-70px",
-                  boxShadow: "0 8px 25px rgba(0,0,0,0.25)",
-                }}
+              <EditableField
+                value={user.name}
+                field="name"
+                onSave={updateField}
+                textClass="fw-bold justify-content-center fs-4"
+                inputClass="text-center"
               />
 
-              {/* Name */}
-              <h2 className="fw-bold mt-3">{user.name}</h2>
-
-              {/* Email */}
-              <p style={{ opacity: 0.85 }}>{user.email}</p>
-
-              {/* Role */}
-              <div
-                style={{
-                  display: "inline-block",
-                  padding: "8px 18px",
-                  borderRadius: "25px",
-                  background: "rgba(255,255,255,0.18)",
-                  fontSize: "14px",
-                  marginBottom: "20px",
-                }}
-              >
-                Frontend Developer
+              <div className="text-muted mb-1 d-flex justify-content-center align-items-center gap-2">
+                <EditableField
+                  value={user.email}
+                  field="email"
+                  type="email"
+                  onSave={updateField}
+                />
               </div>
 
-              <hr style={{ borderColor: "rgba(255,255,255,0.2)" }} />
-
-              {/* Stats */}
-              <div className="row text-center mt-4 mb-4">
-                <div className="col-4">
-                  <h4 className="fw-bold">12</h4>
-                  <small>Applied</small>
-                </div>
-                <div className="col-4">
-                  <h4 className="fw-bold">5</h4>
-                  <small>Saved</small>
-                </div>
-                <div className="col-4">
-                  <h4 className="fw-bold">3</h4>
-                  <small>Interviews</small>
-                </div>
+              <div className="text-muted d-flex justify-content-center align-items-center gap-2">
+                <EditableField
+                  value={user.phone}
+                  field="phone"
+                  type="tel"
+                  placeholder="Add Phone"
+                  onSave={updateField}
+                />
               </div>
-
-              {/* Profile Completion */}
-              <div className="mb-4 text-start">
-                <small>Profile Strength</small>
-                <div
-                  className="progress mt-2"
-                  style={{
-                    height: "10px",
-                    borderRadius: "20px",
-                    background: "rgba(255,255,255,0.15)",
-                  }}
-                >
-                  <div
-                    className="progress-bar"
-                    style={{
-                      width: "80%",
-                      borderRadius: "20px",
-                      background: "linear-gradient(90deg, #ffffff, #c3dafe)",
-                    }}
-                  ></div>
-                </div>
-                <small>80% completed</small>
-              </div>
-
-              {/* Buttons */}
-              <button
-                className="btn w-100 mb-3"
-                style={{
-                  background: "#fff",
-                  color: "#4c51bf",
-                  borderRadius: "30px",
-                  fontWeight: "700",
-                  padding: "12px",
-                  fontSize: "16px",
-                  boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
-                }}
-                onClick={() => navigate("/edit-profile")}
-              >
-                Edit Profile ✏️
-              </button>
-
-              <button
-                className="btn w-100"
-                style={{
-                  background: "rgba(255,255,255,0.12)",
-                  color: "#fff",
-                  borderRadius: "30px",
-                  fontWeight: "600",
-                  padding: "12px",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
-                View Resume 📄
-              </button>
             </div>
+
+            {/* Personal Details */}
+            <PersonalDetails
+              editedUser={editedUser}
+              setEditedUser={setEditedUser}
+              theme={theme}
+              updateField={updateField}
+              user={user}
+            />
+
+            <button
+              className="btn w-100 fw-bold shadow-sm py-2"
+              style={{
+                background: theme.primaryPurple,
+                color: "#fff",
+                borderRadius: "12px",
+              }}
+              onClick={handleProfileSave}
+            >
+              Save All Changes
+            </button>
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div className="col-md-8">
+            {/* SKILLS */}
+            <Skills
+              skills={skills}
+              setSkills={setSkills}
+              newSkill={newSkill}
+              setNewSkill={setNewSkill}
+              theme={theme}
+              availableSkills={availableSkills}
+            />
+
+            {/* EDUCATION */}
+            <Education
+              education={education}
+              setEducation={setEducation}
+              newEdu={newEdu}
+              setNewEdu={setNewEdu}
+              theme={theme}
+            />
+
+            {/* EXPERIENCE */}
+      <Experience
+  experience={experience}
+  setExperience={setExperience}
+  theme={theme}
+  user={user}
+/>
+
+            {/* RESUME */}
+            <Resume user={user} theme={theme} setUser={setUser}/>
           </div>
         </div>
       </div>

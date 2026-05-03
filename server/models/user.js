@@ -65,15 +65,23 @@ const userSchema = new mongoose.Schema({
     default: ""
   },
 
-  skills: {
-    type: [String],
-    default: []
-  },
+  skills: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Skill"
+    }
+  ],
 
-  education: {
-    type: String,
-    default: ""
+  education: [
+  {
+    degree: { type: String },
+    institution: { type: String },
+    year: { type: String },
+    grade: { type: String },
+    location: { type: String },
+    description: { type: String },
   },
+],
 
   experience: {
     type: String,
@@ -81,8 +89,8 @@ const userSchema = new mongoose.Schema({
   },
 
   preferredRole: {
-    type: String,
-    default: ""
+    type: [String],   // 🔥 array
+    default: []
   },
 
   bio: {
@@ -99,7 +107,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
-
+  dob: { type: String },
   // 🔥 FILE STORAGE
 
   profilePic: {
