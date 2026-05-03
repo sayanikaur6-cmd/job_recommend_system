@@ -61,7 +61,7 @@ exports.searchJobs = async (req, res) => {
 
     let currentPage = 1;
     let hasMore = true;
-    const MAX_PAGES = 10; // 🔥 safety limit (changeable)
+    const MAX_PAGES = 1; // 🔥 safety limit (changeable)
 
     while (hasMore && currentPage <= MAX_PAGES) {
       const response = await axios.get(

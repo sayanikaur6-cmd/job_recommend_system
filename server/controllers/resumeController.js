@@ -1,52 +1,60 @@
 const PDFDocument = require("pdfkit");
 const User = require("../models/user");
 const Experience = require("../models/Experience");
+const Education = require("../models/Education");
+// generatePeachResume, generateMinimalResume, generateBlackResume import from uttils/genResume.js
+const {
+  generatePeachResume,
+  generateMinimalResume,
+  generateBlackResume
+} = require("../utils/genResume");
+ 
 // Education, Skills thakle import kor
 
 exports.generateResume = async (req, res) => {
   try {
-    const { user_id } = req.params;
+    const userId = req.user.id;
+    const { templateId } = req.params;
 
-    const user = await User.findById(user_id);
-    const experiences = await Experience.find({ user_id });
+    const user = await User.findById(userId)
+      .populate("skills");
+      // experiene and education for the user
+      const education = await Education.find({ userId: userId });
+      const experience = await Experience.find({ user_id: userId });
 
-    const doc = new PDFDocument();
+      const fullUser = {
+        ...user.toObject(),
+        education,
+        experience
+      };
+      // const user= fullUser;
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!["peach", "minimal", "black"].includes(templateId)) {
+      return res.status(400).json({ message: "Invalid template" });
+    }
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=resume.pdf`
+      `attachment; filename=${user.name || "resume"}-${templateId}.pdf`
     );
 
-    doc.pipe(res);
+    if (templateId === "peach") {
+      return generatePeachResume(fullUser, res);
+    }
 
-    // 🧠 HEADER
-    doc.fontSize(20).text(user.name, { bold: true });
-    doc.fontSize(12).text(user.email);
-    doc.moveDown();
+    if (templateId === "minimal") {
+      return generateMinimalResume(fullUser, res);
+    }
 
-    // 🧠 EXPERIENCE
-    doc.fontSize(16).text("Experience", { underline: true });
-
-    experiences.forEach((exp) => {
-      doc
-        .fontSize(12)
-        .text(`${exp.role} - ${exp.company_name}`);
-      doc
-        .fontSize(10)
-        .text(
-          `${exp.start_date?.toDateString()} - ${
-            exp.end_date
-              ? exp.end_date.toDateString()
-              : "Present"
-          }`
-        );
-      doc.text(exp.description || "");
-      doc.moveDown();
-    });
-
-    doc.end();
+    if (templateId === "black") {
+      return generateBlackResume(fullUser, res);
+    }
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Resume generate failed" });
   }
 };
