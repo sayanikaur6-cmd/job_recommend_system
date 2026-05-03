@@ -6,8 +6,9 @@ const educationSchema = new mongoose.Schema({
     ref: "User",
   },
   degree: String,
-  college: String,
-  year: String,
+  institute: String,
+  startyear: String,
+  endyear: String,
 });
 
 module.exports = mongoose.model("Education", educationSchema);

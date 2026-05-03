@@ -1,5 +1,5 @@
 import { useRef } from "react";
-
+import { generateResume } from "../../utils/resumeApi";
 const Resume = ({ user, theme, setUser }) => {
   const fileRef = useRef();
 
@@ -81,6 +81,14 @@ const Resume = ({ user, theme, setUser }) => {
         <h5 className="fw-bold text-white mb-0">My Resume</h5>
 
         <div className="d-flex gap-3 align-items-center">
+          <button
+            type="button"
+            className="btn btn-light fw-semibold px-3 py-2"
+            onClick={() => generateResume(user._id)}
+          >
+            <i className="bi bi-file-earmark-text me-2"></i>
+            Generate Resume
+          </button>
           {/* 🔥 UPLOAD ICON */}
           <i
             className="bi bi-upload text-white"
