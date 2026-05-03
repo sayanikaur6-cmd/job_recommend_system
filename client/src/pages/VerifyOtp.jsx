@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(60);
+  const inputRefs = useRef([]);
+
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email;
@@ -16,13 +18,30 @@ const VerifyOtp = () => {
 
   const handleChange = (value, index) => {
     if (!/^\d?$/.test(value)) return;
+
     const copy = [...otp];
     copy[index] = value;
     setOtp(copy);
+
+    // ✅ ekta digit dile next box e cursor
+    if (value && index < 5) {
+      inputRefs.current[index + 1].focus();
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    // ✅ backspace dile previous box e cursor
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputRefs.current[index - 1].focus();
+    }
   };
 
   const handleVerify = async () => {
     const finalOtp = otp.join("");
+
+    if (finalOtp.length !== 6) {
+      return alert("Please enter 6 digit OTP");
+    }
 
     const res = await fetch("http://localhost:5000/api/auth/verify-otp", {
       method: "POST",
@@ -45,12 +64,18 @@ const VerifyOtp = () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
+
+    setOtp(["", "", "", "", "", ""]);
+    inputRefs.current[0].focus();
     setTimer(60);
     alert("OTP resent");
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100" style={{ background: "linear-gradient(135deg,#6a5acd,#4e73df)" }}>
+    <div
+      className="d-flex justify-content-center align-items-center vh-100"
+      style={{ background: "linear-gradient(135deg,#6a5acd,#4e73df)" }}
+    >
       <div className="card p-4 shadow" style={{ width: "450px", borderRadius: "18px" }}>
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h3 className="m-0">Verify OTP</h3>
@@ -61,9 +86,11 @@ const VerifyOtp = () => {
           {otp.map((digit, index) => (
             <input
               key={index}
+              ref={(el) => (inputRefs.current[index] = el)}
               maxLength="1"
               value={digit}
               onChange={(e) => handleChange(e.target.value, index)}
+              onKeyDown={(e) => handleKeyDown(e, index)}
               className="form-control text-center"
               style={{ width: "55px", height: "55px", fontSize: "24px" }}
             />
