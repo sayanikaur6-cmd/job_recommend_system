@@ -1,5 +1,13 @@
 const PDFDocument = require("pdfkit");
 const puppeteer = require("puppeteer");
+const formatDate = (date) => {
+  if (!date) return "";
+
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+  });
+};
 const generatePeachHTML = (user) => {
     const skills = Array.isArray(user.skills) ? user.skills : [];
     const education = Array.isArray(user.education) ? user.education : [];
@@ -153,9 +161,9 @@ body {
 <div class="section-left">
   <div class="title-left">Language</div>
   <ul>
-    ${user.languages && user.languages.map((lang, index) => (
-     ` <li>${lang}</li>`
-    ))}
+    <li>English</li>
+    <li>France</li>
+    <li>Spain</li>
   </ul>
 </div>
 
@@ -211,7 +219,7 @@ body {
   ${(user.experience || []).map(
             (e) => `
       <div class="item">
-        <h4>${e.start_date} ${e.company_name}</h4>
+        <h4>${formatDate(e.start_date)} ${e.company_name}</h4>
         <p>${e.role}</p>
       </div>
     `
@@ -483,9 +491,9 @@ const generateHTML = (user) => {
             <span class="icon">A☆</span> Language
             </h2>
             <ul>
-            ${user.languages && user.languages.map((lang, index) => (
-              ` <li>${lang}</li>`
-              ))}
+            <li>English</li>
+            <li>Bengali</li>
+            <li>Hindi</li>
             </ul>
         </div>
         </div>
@@ -506,7 +514,7 @@ const generateHTML = (user) => {
                 <div class="timeline-item">
                     <div class="timeline-line"></div>
                     <div class="timeline-content">
-                    <h3>${e.year || e.start_date || ""}</h3>
+                    <h3>${e.year || formatDate(e.start_date) || ""}</h3>
                     <h4>${e.institution || e.school || "Institution"}</h4>
                     <p>${e.degree || "Degree"}</p>
                     <p>${e.grade || e.cgpa || ""}</p>
@@ -525,7 +533,7 @@ const generateHTML = (user) => {
                 <div class="timeline-item">
                     <div class="timeline-line"></div>
                     <div class="timeline-content">
-                    <h3>${e.start_date || ""} - ${e.end_date || "Present"}</h3>
+                    <h3>${formatDate(e.start_date)||""} - ${formatDate(e.end_date) || "Present"}</h3>
                     <h4>${e.role || "Role"}</h4>
                     <p>${e.company_name || e.company || "Company"}</p>
                     <ul>
@@ -856,9 +864,9 @@ body{
 
       <div class="pill-title">Language</div>
       <ul class="left-list">
-        ${user.languages && user.languages.map((lang, index) => (
-        ` <li>${lang}</li>`
-        ))}
+        <li>English</li>
+        <li>Germany (basic)</li>
+        <li>Spain (basic)</li>
       </ul>
 
       <div class="pill-title">Expertise</div>
@@ -886,7 +894,7 @@ body{
             <div class="item">
               <h3>${e.company_name || e.company || "Company"}</h3>
               <div class="place">${e.location || ""}</div>
-              <div class="date">${e.start_date || ""} - ${e.end_date || "Present"}</div>
+              <div class="date">${formatDate(e.start_date) || ""} - ${formatDate(e.end_date) || "Present"}</div>
               <p>${e.description || ""}</p>
             </div>
           `).join("")
@@ -905,7 +913,7 @@ body{
             <div class="item">
               <h3>${e.institution || e.school || "University"}</h3>
               <p>${e.degree || ""}</p>
-              <p>${e.year || e.start_date || ""}${e.end_date ? " - " + e.end_date : ""}</p>
+              <p>${formatDate(e.year) || formatDate(e.start_date) || ""}${e.end_date ? " - " + formatDate(e.end_date) : ""}</p>
             </div>
           `).join("")
             : `
