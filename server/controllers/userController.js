@@ -229,10 +229,12 @@ exports.updateSingleField = async (req, res) => {
       "name",
       "phone",
       "email",
+      "bio",
       "location",
       "dob",
       "linkedin",
       "github",
+      "languages",
     ];
 
     if (!allowedFields.includes(field)) {

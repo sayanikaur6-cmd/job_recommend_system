@@ -6,6 +6,8 @@ import Skills from "../components/profile/Skills";
 import Education from "../components/profile/Education";
 import Resume from "../components/profile/Resume";
 import PersonalDetails from "../components/profile/PersonalDetails";
+import PreferredLanguage from "../components/profile/PreferredLanguage";
+import Bio from "../components/profile/Bio";
 import { getEducations } from "../api/educationApi";
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -14,6 +16,7 @@ const Profile = () => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [languages, setLanguages] = useState([]);
 
   // -- Form States --
   const [editedUser, setEditedUser] = useState({
@@ -83,10 +86,11 @@ const Profile = () => {
       console.log("Fetched profile:", data);
       if (res.ok) {
         setUser(data);
-        setEditedUser({...data});
+        setEditedUser({ ...data });
         setSkills(data.skills || []);
         // setEducation(data.education || []);
         setExperience(data.experience || []);
+        setLanguages(data.languages || []);
       }
     };
     fetchProfile();
@@ -113,37 +117,39 @@ const Profile = () => {
 
   // --- Handlers (Logic remains unchanged) ---
   const handleImageChange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const token = localStorage.getItem("token");
-  // 🔹 preview (তোরটা ঠিক আছে)
-  setImageFile(file);
-  const reader = new FileReader();
-  reader.onloadend = () => {
-    setSelectedImage(reader.result);
+    const file = e.target.files[0];
+    if (!file) return;
+    const token = localStorage.getItem("token");
+    // 🔹 preview (তোরটা ঠিক আছে)
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSelectedImage(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    // 🔥 backend upload
+    const formData = new FormData();
+    formData.append("profilePhoto", file);
+
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/users/profile-picture",
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`, // JWT token
+          },
+          body: formData,
+        },
+      );
+
+      const data = await res.json();
+      console.log("Uploaded user:", data);
+    } catch (error) {
+      console.error("Upload error:", error);
+    }
   };
-  reader.readAsDataURL(file);
-
-  // 🔥 backend upload
-  const formData = new FormData();
-  formData.append("profilePhoto", file);
-
-  try {
-    const res = await fetch("http://localhost:5000/api/users/profile-picture", {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`, // JWT token
-      },
-      body: formData,
-    });
-
-    const data = await res.json();
-    console.log("Uploaded user:", data);
-
-  } catch (error) {
-    console.error("Upload error:", error);
-  }
-};
 
   const addSkill = () => {
     if (newSkill && !skills.includes(newSkill)) {
@@ -162,7 +168,7 @@ const Profile = () => {
       setNewEdu({ degree: "", institution: "", year: "" });
     }
   };
-  
+
   const removeEducation = (index) => {
     setEducation(education.filter((_, i) => i !== index));
   };
@@ -232,24 +238,50 @@ const Profile = () => {
       alert("Server error.");
     }
   };
-const updateField = async (field, value) => {
-  const token = localStorage.getItem("token");
+  const saveLanguages = async (updatedLanguages) => {
+    const token = localStorage.getItem("token");
 
-  const res = await fetch("http://localhost:5000/api/users/update-field", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ field, value }),
-  });
+    const res = await fetch("http://localhost:5000/api/users/update-field", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        field: "languages",
+        value: updatedLanguages,
+      }),
+    });
 
-  const data = await res.json();
-  if (res.ok) {
-    setUser((prev) => ({ ...prev, [field]: value }));
-  }
-  return data;
-};
+    const data = await res.json();
+
+    if (res.ok) {
+      setUser(data);
+      setLanguages(data.languages || []);
+    } else {
+      console.log("Language save failed:", data);
+    }
+  };
+  //   console.log("STATUS:", res.status);
+  // console.log("RESPONSE:", data); // 🔥 IMPORTANT
+  const updateField = async (field, value) => {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("http://localhost:5000/api/users/update-field", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ field, value }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      setUser((prev) => ({ ...prev, [field]: value }));
+    }
+    return data;
+  };
   return (
     <div
       style={{
@@ -347,7 +379,18 @@ const updateField = async (field, value) => {
               updateField={updateField}
               user={user}
             />
-
+            <Bio
+              user={user}
+              setUser={setUser}
+              theme={theme}
+              updateField={updateField}
+            />
+            <PreferredLanguage
+              languages={languages}
+              setLanguages={setLanguages}
+              saveLanguages={saveLanguages}
+              theme={theme}
+            />
             <button
               className="btn w-100 fw-bold shadow-sm py-2"
               style={{
@@ -383,15 +426,15 @@ const updateField = async (field, value) => {
             />
 
             {/* EXPERIENCE */}
-      <Experience
-  experience={experience}
-  setExperience={setExperience}
-  theme={theme}
-  user={user}
-/>
+            <Experience
+              experience={experience}
+              setExperience={setExperience}
+              theme={theme}
+              user={user}
+            />
 
             {/* RESUME */}
-            <Resume user={user} theme={theme} setUser={setUser}/>
+            <Resume user={user} theme={theme} setUser={setUser} />
           </div>
         </div>
       </div>
