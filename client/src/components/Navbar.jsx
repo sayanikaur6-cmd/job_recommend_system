@@ -12,7 +12,6 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
 
   return (
     <nav className="d-flex justify-content-between align-items-center px-4 py-3 shadow-sm">
-
       {/* LOGO */}
       <h3 style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
         Career<span className="text-primary">Sync</span>
@@ -20,7 +19,6 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
 
       {/* RIGHT SIDE */}
       <div className="d-flex align-items-center gap-3">
-
         {/* 🔍 Search Component */}
         <AnimatedSearch />
 
@@ -54,10 +52,10 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
             {/* 🔔 CONNECTION REQUESTS */}
             <button
               className="btn btn-outline-primary d-flex align-items-center gap-2"
-              onClick={() => navigate("/connect")}
+              onClick={() => navigate("/feed")}
             >
-              <i className="bi bi-person-plus-fill"></i>
-              Connect
+              <i className="bi bi-file-post"></i>
+              Feed
             </button>
 
             {/* 👤 PROFILE */}
@@ -69,10 +67,7 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
             ></i>
 
             {/* 🚪 LOGOUT */}
-            <button
-              className="btn btn-danger btn-sm"
-              onClick={handleLogout}
-            >
+            <button className="btn btn-danger btn-sm" onClick={handleLogout}>
               Logout
             </button>
           </>

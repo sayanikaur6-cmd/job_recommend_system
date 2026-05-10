@@ -15,6 +15,7 @@ import JobDetails from "./pages/JobDetails";
 import SearchProfiles from "./pages/SearchProfiles";
 import PublicProfile from "./pages/PublicProfile";
 import Chat from "./pages/Chat";
+import Feed from "./pages/Feed";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -48,6 +49,7 @@ function App() {
         <Route path="/search-profiles" element={<SearchProfiles />} />
         <Route path="/public-profile/:userId" element={<PublicProfile />} />
         <Route path="/chat/:userId" element={<Chat />} />
+        <Route path="/feed" element={<Feed />} />
       </Routes>
     </>
   );
