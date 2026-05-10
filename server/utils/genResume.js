@@ -185,7 +185,18 @@ body {
 
 <div class="section">
   <div class="section-title">About Me</div>
-  <p>${user.bio || ""}</p>
+   <p
+    style="
+      max-width:100%;
+      white-space:normal;
+      overflow-wrap:break-word;
+      word-break:break-word;
+      line-height:1.6;
+      margin:0;
+    "
+  >
+    ${user.bio || ""}
+  </p>
 </div>
 
 <div class="section">
@@ -454,7 +465,19 @@ const generateHTML = (user) => {
             <h2 class="section-title">
             <span class="icon">👤</span> About Me
             </h2>
-            <p class="about">${user.bio || user.about || "Write about yourself..."}</p>
+             <p
+        class="about"
+        style="
+            max-width:100%;
+            white-space:normal;
+            overflow-wrap:break-word;
+            word-break:break-word;
+            line-height:1.7;
+            margin-top:10px;
+        "
+    >
+        ${user.bio || user.about || "Write about yourself..."}
+    </p>
         </div>
 
         <div class="section contact">
@@ -844,9 +867,21 @@ body{
   <div class="left">
     <div class="left-content">
       <div class="about-title">About Me</div>
-      <p class="about">
-        ${user.bio || user.about || "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum sit amet quam rhoncus, egestas dui eget, malesuada justo. Ut aliquam augue dui."}
-      </p>
+      
+    <p
+      class="about"
+      style="
+        width:100%;
+        max-width:100%;
+        white-space:normal;
+        overflow-wrap:break-word;
+        word-break:break-word;
+        line-height:1.7;
+        margin-top:10px;
+      "
+    >
+      ${user.bio || user.about || "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum sit amet quam rhoncus, egestas dui eget, malesuada justo. Ut aliquam augue dui."}
+    </p>
 
       <div class="contact">
         <div class="contact-row"><div class="contact-icon">☎</div><div>${user.phone || "+123-456-7890"}</div></div>

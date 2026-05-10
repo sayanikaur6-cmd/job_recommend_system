@@ -12,6 +12,9 @@ import ResetPassword from "./pages/ResetPassword";
 import Navbar from "./components/Navbar";
 import SearchResults from "./pages/SearchResults";
 import JobDetails from "./pages/JobDetails";
+import SearchProfiles from "./pages/SearchProfiles";
+import PublicProfile from "./pages/PublicProfile";
+import Chat from "./pages/Chat";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -23,14 +26,17 @@ function App() {
       setIsLoggedIn(true);
     }
   }, []);
-  
+
   return (
     <>
       <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
-        <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+        <Route
+          path="/login"
+          element={<Login setIsLoggedIn={setIsLoggedIn} />}
+        />
         <Route path="/profile" element={<Profile />} />
         <Route path="/edit-profile" element={<EditProfile />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -39,6 +45,9 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/search-results" element={<SearchResults />} />
         <Route path="/job-details" element={<JobDetails />} />
+        <Route path="/search-profiles" element={<SearchProfiles />} />
+        <Route path="/public-profile/:userId" element={<PublicProfile />} />
+        <Route path="/chat/:userId" element={<Chat />} />
       </Routes>
     </>
   );

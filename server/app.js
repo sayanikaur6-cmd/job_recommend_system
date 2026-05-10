@@ -6,6 +6,7 @@ const fetchJobsByLocation = require("./services/fetchJobsByLocation");
 const statesAndCities = require("./config/state.json");
 const session = require("express-session");
 const passport = require("./config/passport");
+const profileSearchRoutes = require("./routes/profileSearchRoutes");
 app.use(cors());
 app.use(express.json());
 // 🔐 Session
@@ -30,7 +31,7 @@ app.use("/api/education", require("./routes/educationRoutes"));
 app.use("/api/experience", require("./routes/experienceRoutes"));
 app.use("/api/resume",  require("./routes/resumeRoutes"));
 app.use("/uploads", express.static("uploads"));
-
+app.use("/api/profile-search", profileSearchRoutes);
 
 app.get("/get-state", async (req, res) => {
   const { lat, lng } = req.query;
