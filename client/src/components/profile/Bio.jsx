@@ -1,10 +1,33 @@
 import { useState, useRef } from "react";
-
+import { generateBioAPI } from "../../api/bioApi";
 const Bio = ({ user, setUser, theme, updateField }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [bio, setBio] = useState(user.bio || "");
   const textareaRef = useRef();
+  const [loading, setLoading] = useState(false);
 
+  const handleGenerateBio = async () => {
+    try {
+      setLoading(true);
+
+      const res = await generateBioAPI();
+
+      if (res.success) {
+        setBio(res.bio);
+
+        const updatedUser = await updateField("bio", res.bio);
+
+        if (updatedUser) {
+          setUser(updatedUser);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Bio generate failed");
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleSave = async () => {
     if (bio === user.bio) {
       setIsEditing(false);
@@ -43,18 +66,32 @@ const Bio = ({ user, setUser, theme, updateField }) => {
           </small>
         </div>
 
-        <i
-          className="bi bi-pencil-square"
-          style={{
-            fontSize: "20px",
-            cursor: "pointer",
-            color: theme.primaryPurple,
-          }}
-          onClick={() => {
-            setIsEditing(true);
-            setTimeout(() => textareaRef.current?.focus(), 0);
-          }}
-        ></i>
+        <div className="d-flex gap-2 align-items-center">
+          <button
+            className="btn btn-sm text-white"
+            style={{
+              background: theme.primaryPurple,
+              borderRadius: "12px",
+            }}
+            onClick={handleGenerateBio}
+            disabled={loading}
+          >
+            {loading ? "Generating..." : "Generate Bio"}
+          </button>
+
+          <i
+            className="bi bi-pencil-square"
+            style={{
+              fontSize: "20px",
+              cursor: "pointer",
+              color: theme.primaryPurple,
+            }}
+            onClick={() => {
+              setIsEditing(true);
+              setTimeout(() => textareaRef.current?.focus(), 0);
+            }}
+          ></i>
+        </div>
       </div>
 
       {/* 🔹 Content */}
