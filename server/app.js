@@ -30,7 +30,7 @@ app.use("/api/education", require("./routes/educationRoutes"));
 app.use("/api/experience", require("./routes/experienceRoutes"));
 app.use("/api/resume",  require("./routes/resumeRoutes"));
 app.use("/uploads", express.static("uploads"));
-
+app.use("/api/bio", require("./routes/bioRoutes"));
 
 app.get("/get-state", async (req, res) => {
   const { lat, lng } = req.query;
