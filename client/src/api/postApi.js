@@ -61,3 +61,43 @@ export const commentPost = async (postId, text) => {
 
   return res.data;
 };
+export const replyComment = async (
+  postId,
+  commentId,
+  text
+) => {
+  const res = await axios.post(
+    `${API}/api/posts/reply/${postId}/${commentId}`,
+    { text },
+    authHeader()
+  );
+
+  return res.data;
+};
+
+export const likeComment = async (
+  postId,
+  commentId
+) => {
+  const res = await axios.put(
+    `${API}/api/posts/comment-like/${postId}/${commentId}`,
+    {},
+    authHeader()
+  );
+
+  return res.data;
+};
+
+export const likeReply = async (
+  postId,
+  commentId,
+  replyId
+) => {
+  const res = await axios.put(
+    `${API}/api/posts/reply-like/${postId}/${commentId}/${replyId}`,
+    {},
+    authHeader()
+  );
+
+  return res.data;
+};

@@ -1,21 +1,37 @@
 const Post = require("../models/Post");
 
-// create post
+// CREATE POST
 exports.createPost = async (req, res) => {
   try {
+    const currentUserId =
+      req.user?.id || req.user?._id || req.user?.userId;
+
+    if (!currentUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found in token",
+      });
+    }
+
     const post = await Post.create({
-      user: req.user.id,
+      user: currentUserId,
       content: req.body.content,
     });
 
     const populatedPost = await Post.findById(post._id)
-      .populate("user", "name profilePic");
+      .populate("user", "_id name email profilePic")
+      .populate("comments.user", "_id name email profilePic");
 
     res.status(201).json({
       success: true,
-      post: populatedPost,
+      post: {
+        ...populatedPost.toObject(),
+        isOwner: true,
+      },
     });
   } catch (error) {
+    console.log("CREATE POST ERROR:", error);
+
     res.status(500).json({
       success: false,
       message: error.message,
@@ -23,19 +39,33 @@ exports.createPost = async (req, res) => {
   }
 };
 
-// get all posts
+// GET ALL POSTS
 exports.getPosts = async (req, res) => {
   try {
+    const currentUserId =
+      req.user?.id || req.user?._id || req.user?.userId;
+
     const posts = await Post.find()
-      .populate("user", "_id name profilePic")
-      .populate("comments.user", "name profilePic")
+      .populate("user", "_id name email profilePic")
+      .populate("comments.user", "_id name email profilePic")
       .sort({ createdAt: -1 });
+
+    const formattedPosts = posts.map((post) => {
+      const obj = post.toObject();
+
+      obj.isOwner =
+        obj.user?._id?.toString() === currentUserId?.toString();
+
+      return obj;
+    });
 
     res.json({
       success: true,
-      posts,
+      posts: formattedPosts,
     });
   } catch (error) {
+    console.log("GET POSTS ERROR:", error);
+
     res.status(500).json({
       success: false,
       message: error.message,
@@ -43,9 +73,19 @@ exports.getPosts = async (req, res) => {
   }
 };
 
-// update post
+// UPDATE POST
 exports.updatePost = async (req, res) => {
   try {
+    const currentUserId =
+      req.user?.id || req.user?._id || req.user?.userId;
+
+    if (!currentUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found in token",
+      });
+    }
+
     const post = await Post.findById(req.params.postId);
 
     if (!post) {
@@ -55,21 +95,30 @@ exports.updatePost = async (req, res) => {
       });
     }
 
-    if (post.user.toString() !== req.user.id) {
+    if (post.user.toString() !== currentUserId.toString()) {
       return res.status(403).json({
         success: false,
-        message: "Unauthorized",
+        message: "You can update only your own post",
       });
     }
 
     post.content = req.body.content;
     await post.save();
 
+    const updatedPost = await Post.findById(post._id)
+      .populate("user", "_id name email profilePic")
+      .populate("comments.user", "_id name email profilePic");
+
     res.json({
       success: true,
-      post,
+      post: {
+        ...updatedPost.toObject(),
+        isOwner: true,
+      },
     });
   } catch (error) {
+    console.log("UPDATE POST ERROR:", error);
+
     res.status(500).json({
       success: false,
       message: error.message,
@@ -77,97 +126,20 @@ exports.updatePost = async (req, res) => {
   }
 };
 
-// delete post
-exports.deletePost = async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.postId);
-
-    if (!post) {
-      return res.status(404).json({
-        success: false,
-        message: "Post not found",
-      });
-    }
-
-    if (post.user.toString() !== req.user.id) {
-      return res.status(403).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
-    await post.deleteOne();
-
-    res.json({
-      success: true,
-      message: "Post deleted",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-// like post
-exports.likePost = async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.postId);
-
-    const alreadyLiked = post.likes.includes(req.user.id);
-
-    if (alreadyLiked) {
-      post.likes = post.likes.filter(
-        (id) => id.toString() !== req.user.id
-      );
-    } else {
-      post.likes.push(req.user.id);
-    }
-
-    await post.save();
-
-    res.json({
-      success: true,
-      likes: post.likes.length,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-// comment
-exports.commentPost = async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.postId);
-
-    post.comments.push({
-      user: req.user.id,
-      text: req.body.text,
-    });
-
-    await post.save();
-
-    const updated = await Post.findById(post._id)
-      .populate("comments.user", "name profilePic");
-
-    res.json({
-      success: true,
-      comments: updated.comments,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+// DELETE POST
 exports.deletePost = async (req, res) => {
   try {
     const { postId } = req.params;
+
+    const currentUserId =
+      req.user?.id || req.user?._id || req.user?.userId;
+
+    if (!currentUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found in token",
+      });
+    }
 
     const post = await Post.findById(postId);
 
@@ -178,28 +150,7 @@ exports.deletePost = async (req, res) => {
       });
     }
 
-    const currentUserId =
-      req.user?.id ||
-      req.user?._id ||
-      req.user?.userId;
-
-    if (!currentUserId) {
-      return res.status(401).json({
-        success: false,
-        message: "User not found in token",
-      });
-    }
-
-    const ownerId = post.user?.toString();
-
-    if (!ownerId) {
-      return res.status(400).json({
-        success: false,
-        message: "Post owner not found",
-      });
-    }
-
-    if (ownerId !== currentUserId.toString()) {
+    if (post.user.toString() !== currentUserId.toString()) {
       return res.status(403).json({
         success: false,
         message: "You can delete only your own post",
@@ -211,6 +162,268 @@ exports.deletePost = async (req, res) => {
     res.json({
       success: true,
       message: "Post deleted successfully",
+    });
+  } catch (error) {
+    console.log("DELETE POST ERROR:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// LIKE / UNLIKE POST
+exports.likePost = async (req, res) => {
+  try {
+    const currentUserId =
+      req.user?.id || req.user?._id || req.user?.userId;
+
+    if (!currentUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found in token",
+      });
+    }
+
+    const post = await Post.findById(req.params.postId);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    const alreadyLiked = post.likes.some(
+      (id) => id.toString() === currentUserId.toString()
+    );
+
+    if (alreadyLiked) {
+      post.likes = post.likes.filter(
+        (id) => id.toString() !== currentUserId.toString()
+      );
+    } else {
+      post.likes.push(currentUserId);
+    }
+
+    await post.save();
+
+    const updatedPost = await Post.findById(post._id)
+      .populate("user", "_id name email profilePic")
+      .populate("comments.user", "_id name email profilePic");
+
+    res.json({
+      success: true,
+      post: {
+        ...updatedPost.toObject(),
+        isOwner:
+          updatedPost.user?._id?.toString() === currentUserId.toString(),
+      },
+    });
+  } catch (error) {
+    console.log("LIKE POST ERROR:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// COMMENT POST
+exports.commentPost = async (req, res) => {
+  try {
+    const currentUserId =
+      req.user?.id || req.user?._id || req.user?.userId;
+
+    if (!currentUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found in token",
+      });
+    }
+
+    const { text } = req.body;
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Comment text is required",
+      });
+    }
+
+    const post = await Post.findById(req.params.postId);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    post.comments.push({
+      user: currentUserId,
+      text,
+    });
+
+    await post.save();
+
+    const updatedPost = await Post.findById(post._id)
+      .populate("user", "_id name email profilePic")
+      .populate("comments.user", "_id name email profilePic");
+
+    res.json({
+      success: true,
+      post: {
+        ...updatedPost.toObject(),
+        isOwner:
+          updatedPost.user?._id?.toString() === currentUserId.toString(),
+      },
+    });
+  } catch (error) {
+    console.log("COMMENT POST ERROR:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+// REPLY COMMENT
+exports.replyComment = async (req, res) => {
+  try {
+    const currentUserId =
+      req.user?.id || req.user?._id || req.user?.userId;
+
+    const { postId, commentId } = req.params;
+    const { text } = req.body;
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    const comment = post.comments.id(commentId);
+
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        message: "Comment not found",
+      });
+    }
+
+    comment.replies.push({
+      user: currentUserId,
+      text,
+    });
+
+    await post.save();
+
+    const updatedPost = await Post.findById(post._id)
+      .populate("user", "_id name profilePic")
+      .populate("comments.user", "_id name profilePic")
+      .populate("comments.replies.user", "_id name profilePic");
+
+    res.json({
+      success: true,
+      post: updatedPost,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// LIKE COMMENT
+exports.likeComment = async (req, res) => {
+  try {
+    const currentUserId =
+      req.user?.id || req.user?._id || req.user?.userId;
+
+    const { postId, commentId } = req.params;
+
+    const post = await Post.findById(postId);
+
+    const comment = post.comments.id(commentId);
+
+    const alreadyLiked = comment.likes.some(
+      (id) => id.toString() === currentUserId.toString()
+    );
+
+    if (alreadyLiked) {
+      comment.likes = comment.likes.filter(
+        (id) => id.toString() !== currentUserId.toString()
+      );
+    } else {
+      comment.likes.push(currentUserId);
+    }
+
+    await post.save();
+
+    const updatedPost = await Post.findById(post._id)
+      .populate("user", "_id name profilePic")
+      .populate("comments.user", "_id name profilePic")
+      .populate("comments.replies.user", "_id name profilePic");
+
+    res.json({
+      success: true,
+      post: updatedPost,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// LIKE REPLY
+exports.likeReply = async (req, res) => {
+  try {
+    const currentUserId =
+      req.user?.id || req.user?._id || req.user?.userId;
+
+    const { postId, commentId, replyId } = req.params;
+
+    const post = await Post.findById(postId);
+
+    const comment = post.comments.id(commentId);
+
+    const reply = comment.replies.id(replyId);
+
+    const alreadyLiked = reply.likes.some(
+      (id) => id.toString() === currentUserId.toString()
+    );
+
+    if (alreadyLiked) {
+      reply.likes = reply.likes.filter(
+        (id) => id.toString() !== currentUserId.toString()
+      );
+    } else {
+      reply.likes.push(currentUserId);
+    }
+
+    await post.save();
+
+    const updatedPost = await Post.findById(post._id)
+      .populate("user", "_id name profilePic")
+      .populate("comments.user", "_id name profilePic")
+      .populate("comments.replies.user", "_id name profilePic");
+
+    res.json({
+      success: true,
+      post: updatedPost,
     });
   } catch (error) {
     console.log(error);

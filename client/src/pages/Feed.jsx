@@ -5,6 +5,9 @@ import {
   deletePost,
   likePost,
   commentPost,
+  replyComment,
+  likeComment,
+  likeReply,
 } from "../api/postApi";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -36,25 +39,16 @@ const Feed = () => {
   };
 
   const handleDelete = async (id) => {
-  try {
-    const ok = window.confirm(
-      "Delete this post?"
-    );
+    try {
+      const ok = window.confirm("Delete this post?");
+      if (!ok) return;
 
-    if (!ok) return;
-
-    await deletePost(id);
-
-    setPosts((prev) =>
-      prev.filter((p) => p._id !== id)
-    );
-  } catch (error) {
-    alert(
-      error.response?.data?.message ||
-      "Delete failed"
-    );
-  }
-};
+      await deletePost(id);
+      setPosts((prev) => prev.filter((p) => p._id !== id));
+    } catch (error) {
+      alert(error.response?.data?.message || "Delete failed");
+    }
+  };
 
   const handleLike = async (id) => {
     await likePost(id);
@@ -150,6 +144,13 @@ const Feed = () => {
           padding: 10px 14px;
         }
 
+        .reply-item {
+          background: #ffffff;
+          border-radius: 14px;
+          padding: 9px 12px;
+          border: 1px solid #edf1ff;
+        }
+
         .delete-btn {
           border-radius: 999px;
         }
@@ -179,9 +180,7 @@ const Feed = () => {
           />
 
           <div className="d-flex justify-content-between align-items-center">
-            <small className="text-muted">
-              {content.length}/500 characters
-            </small>
+            <small className="text-muted">{content.length}/500 characters</small>
 
             <button
               className="btn btn-primary px-5 rounded-pill"
@@ -201,6 +200,7 @@ const Feed = () => {
             onDelete={handleDelete}
             onLike={handleLike}
             onComment={handleComment}
+            reload={loadPosts}
           />
         ))}
       </div>
@@ -208,19 +208,14 @@ const Feed = () => {
   );
 };
 
-const PostCard = ({ post, currentUser, onDelete, onLike, onComment }) => {
+const PostCard = ({ post, currentUser, onDelete, onLike, onComment, reload }) => {
   const [comment, setComment] = useState("");
-
-  const currentUserId =
-    currentUser?.id || currentUser?._id || currentUser?.userId;
-
-  const isOwner = currentUserId?.toString() === post.user?._id?.toString();
 
   const userImage = post.user?.profilePic
     ? post.user.profilePic.startsWith("http")
       ? post.user.profilePic
       : `${API}${post.user.profilePic}`
-    : "https://ui-avatars.com/api/?name=User&background=0d6efd&color=fff";
+    : `https://ui-avatars.com/api/?name=${post.user?.name || "User"}&background=0d6efd&color=fff`;
 
   return (
     <div className="glass-card post-card p-4 mb-4">
@@ -229,9 +224,7 @@ const PostCard = ({ post, currentUser, onDelete, onLike, onComment }) => {
           <img src={userImage} alt="" className="avatar" />
 
           <div>
-            <h6 className="fw-bold mb-0">
-              {post.user?.name || "Unknown User"}
-            </h6>
+            <h6 className="fw-bold mb-0">{post.user?.name || "Unknown User"}</h6>
 
             <small className="text-muted">
               <i className="bi bi-clock me-1"></i>
@@ -241,7 +234,7 @@ const PostCard = ({ post, currentUser, onDelete, onLike, onComment }) => {
           </div>
         </div>
 
-        {isOwner && (
+        {post.isOwner && (
           <button
             className="btn btn-outline-danger btn-sm delete-btn"
             onClick={() => onDelete(post._id)}
@@ -293,12 +286,100 @@ const PostCard = ({ post, currentUser, onDelete, onLike, onComment }) => {
 
         <div className="mt-3">
           {(post.comments || []).map((c) => (
-            <div className="comment-item mb-2" key={c._id}>
-              <strong>{c.user?.name || "User"}</strong>
-              <p className="mb-0 small">{c.text}</p>
-            </div>
+            <CommentCard
+              key={c._id}
+              comment={c}
+              postId={post._id}
+              reload={reload}
+            />
           ))}
         </div>
+      </div>
+    </div>
+  );
+};
+
+const CommentCard = ({ comment, postId, reload }) => {
+  const [reply, setReply] = useState("");
+  const [showReply, setShowReply] = useState(false);
+
+  const handleReply = async () => {
+    if (!reply.trim()) return;
+
+    await replyComment(postId, comment._id, reply);
+    setReply("");
+    setShowReply(false);
+    reload();
+  };
+
+  const handleLikeComment = async () => {
+    await likeComment(postId, comment._id);
+    reload();
+  };
+
+  const handleLikeReply = async (replyId) => {
+    await likeReply(postId, comment._id, replyId);
+    reload();
+  };
+
+  return (
+    <div className="mb-3">
+      <div className="comment-item">
+        <strong>{comment.user?.name || "User"}</strong>
+
+        <p className="mb-1 mt-1 small">{comment.text}</p>
+
+        <div className="d-flex gap-3 mt-2">
+          <button
+            className="btn btn-sm btn-link p-0 text-decoration-none"
+            onClick={handleLikeComment}
+          >
+            ❤️ {comment.likes?.length || 0}
+          </button>
+
+          <button
+            className="btn btn-sm btn-link p-0 text-decoration-none"
+            onClick={() => setShowReply(!showReply)}
+          >
+            Reply
+          </button>
+        </div>
+      </div>
+
+      {showReply && (
+        <div className="d-flex gap-2 mt-2 ms-4">
+          <input
+            type="text"
+            className="form-control form-control-sm"
+            placeholder={`Reply to ${comment.user?.name || "User"}...`}
+            value={reply}
+            onChange={(e) => setReply(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleReply();
+            }}
+          />
+
+          <button className="btn btn-sm btn-primary" onClick={handleReply}>
+            Send
+          </button>
+        </div>
+      )}
+
+      <div className="ms-4 mt-2">
+        {(comment.replies || []).map((r) => (
+          <div className="reply-item mb-2" key={r._id}>
+            <strong>{r.user?.name || "User"}</strong>
+
+            <p className="mb-1 mt-1 small">{r.text}</p>
+
+            <button
+              className="btn btn-sm btn-link p-0 text-decoration-none"
+              onClick={() => handleLikeReply(r._id)}
+            >
+              ❤️ {r.likes?.length || 0}
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );
