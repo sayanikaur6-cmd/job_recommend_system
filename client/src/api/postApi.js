@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const authHeader = () => ({
   headers: {
@@ -8,21 +8,48 @@ const authHeader = () => ({
   },
 });
 
+// GET POSTS
 export const getPosts = async () => {
   const res = await axios.get(`${API}/api/posts`, authHeader());
-  return res.data;
+  return res.data.posts; // array return korche
 };
 
-export const createPost = async (content) => {
+// CREATE POST WITH IMAGE + TAG + MENTION
+export const createPost = async (formData) => {
   const res = await axios.post(
     `${API}/api/posts`,
-    { content },
-    authHeader()
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
   );
 
-  return res.data;
+  return res.data.post;
 };
 
+// UPDATE POST
+export const updatePost = async (
+  postId,
+  formData
+) => {
+  const res = await axios.put(
+    `${API}/api/posts/${postId}`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return res.data.post;
+};
+
+// DELETE POST
 export const deletePost = async (postId) => {
   const res = await axios.delete(
     `${API}/api/posts/${postId}`,
@@ -32,16 +59,7 @@ export const deletePost = async (postId) => {
   return res.data;
 };
 
-export const updatePost = async (postId, content) => {
-  const res = await axios.put(
-    `${API}/api/posts/${postId}`,
-    { content },
-    authHeader()
-  );
-
-  return res.data;
-};
-
+// LIKE / UNLIKE POST
 export const likePost = async (postId) => {
   const res = await axios.put(
     `${API}/api/posts/like/${postId}`,
@@ -49,32 +67,39 @@ export const likePost = async (postId) => {
     authHeader()
   );
 
-  return res.data;
+  return res.data.post;
 };
 
-export const commentPost = async (postId, text) => {
+// COMMENT POST WITH MENTIONS
+export const commentPost = async (
+  postId,
+  data
+) => {
   const res = await axios.post(
     `${API}/api/posts/comment/${postId}`,
-    { text },
+    data,
     authHeader()
   );
 
-  return res.data;
+  return res.data.post;
 };
+
+// REPLY COMMENT WITH MENTIONS
 export const replyComment = async (
   postId,
   commentId,
-  text
+  data
 ) => {
   const res = await axios.post(
     `${API}/api/posts/reply/${postId}/${commentId}`,
-    { text },
+    data,
     authHeader()
   );
 
-  return res.data;
+  return res.data.post;
 };
 
+// LIKE COMMENT
 export const likeComment = async (
   postId,
   commentId
@@ -85,9 +110,10 @@ export const likeComment = async (
     authHeader()
   );
 
-  return res.data;
+  return res.data.post;
 };
 
+// LIKE REPLY
 export const likeReply = async (
   postId,
   commentId,
@@ -99,5 +125,5 @@ export const likeReply = async (
     authHeader()
   );
 
-  return res.data;
+  return res.data.post;
 };

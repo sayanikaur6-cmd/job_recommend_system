@@ -11,7 +11,15 @@ const replySchema = new mongoose.Schema(
     text: {
       type: String,
       required: true,
+      trim: true,
     },
+
+    mentions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
 
     likes: [
       {
@@ -34,7 +42,15 @@ const commentSchema = new mongoose.Schema(
     text: {
       type: String,
       required: true,
+      trim: true,
     },
+
+    mentions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
 
     likes: [
       {
@@ -58,8 +74,30 @@ const postSchema = new mongoose.Schema(
 
     content: {
       type: String,
-      required: true,
+      trim: true,
+      maxlength: 500,
+      default: "",
     },
+
+    image: {
+      type: String,
+      default: "",
+    },
+
+    tags: [
+      {
+        type: String,
+        trim: true,
+        lowercase: true,
+      },
+    ],
+
+    mentions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
 
     likes: [
       {
@@ -73,4 +111,5 @@ const postSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Post", postSchema);
+module.exports =
+  mongoose.models.Post || mongoose.model("Post", postSchema);

@@ -1,10 +1,57 @@
 const Post = require("../models/Post");
 
+const getCurrentUserId = (req) => {
+  return req.user?.id || req.user?._id || req.user?.userId;
+};
+
+const getPostId = (req) => {
+  return req.params.postId || req.params.id;
+};
+
+const extractTags = (text = "") => {
+  const matches = text.match(/#[a-zA-Z0-9_]+/g) || [];
+  return matches.map((tag) => tag.replace("#", "").toLowerCase());
+};
+
+const parseJsonArray = (value) => {
+  if (!value) return [];
+
+  if (Array.isArray(value)) return value;
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const populatePostQuery = (query) => {
+  return query
+    .populate("user", "_id name email profilePic")
+    .populate("mentions", "_id name email profilePic")
+    .populate("likes", "_id name")
+    .populate("comments.user", "_id name email profilePic")
+    .populate("comments.mentions", "_id name email profilePic")
+    .populate("comments.likes", "_id name")
+    .populate("comments.replies.user", "_id name email profilePic")
+    .populate("comments.replies.mentions", "_id name email profilePic")
+    .populate("comments.replies.likes", "_id name");
+};
+
+const formatPost = (post, currentUserId) => {
+  const obj = post.toObject ? post.toObject() : post;
+
+  obj.isOwner =
+    obj.user?._id?.toString() === currentUserId?.toString();
+
+  return obj;
+};
+
 // CREATE POST
 exports.createPost = async (req, res) => {
   try {
-    const currentUserId =
-      req.user?.id || req.user?._id || req.user?.userId;
+    const currentUserId = getCurrentUserId(req);
 
     if (!currentUserId) {
       return res.status(401).json({
@@ -13,28 +60,48 @@ exports.createPost = async (req, res) => {
       });
     }
 
+    const { content = "", tags = "", mentionIds = "[]" } = req.body;
+
+    const imagePath = req.file ? `/uploads/posts/${req.file.filename}` : "";
+
+    if (!content.trim() && !imagePath) {
+      return res.status(400).json({
+        success: false,
+        message: "Post content or image required",
+      });
+    }
+
+    const autoTags = extractTags(content);
+
+    const manualTags = tags
+      ? tags
+          .split(",")
+          .map((tag) => tag.trim().replace("#", "").toLowerCase())
+          .filter(Boolean)
+      : [];
+
+    const mentions = parseJsonArray(mentionIds);
+
     const post = await Post.create({
       user: currentUserId,
-      content: req.body.content,
+      content,
+      image: imagePath,
+      tags: [...new Set([...autoTags, ...manualTags])],
+      mentions,
     });
 
-    const populatedPost = await Post.findById(post._id)
-      .populate("user", "_id name email profilePic")
-      .populate("comments.user", "_id name email profilePic");
+    const populatedPost = await populatePostQuery(Post.findById(post._id));
 
     res.status(201).json({
       success: true,
-      post: {
-        ...populatedPost.toObject(),
-        isOwner: true,
-      },
+      post: formatPost(populatedPost, currentUserId),
     });
   } catch (error) {
     console.log("CREATE POST ERROR:", error);
 
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Post create failed",
     });
   }
 };
@@ -42,22 +109,15 @@ exports.createPost = async (req, res) => {
 // GET ALL POSTS
 exports.getPosts = async (req, res) => {
   try {
-    const currentUserId =
-      req.user?.id || req.user?._id || req.user?.userId;
+    const currentUserId = getCurrentUserId(req);
 
-    const posts = await Post.find()
-      .populate("user", "_id name email profilePic")
-      .populate("comments.user", "_id name email profilePic")
-      .sort({ createdAt: -1 });
+    const posts = await populatePostQuery(
+      Post.find().sort({ createdAt: -1 })
+    );
 
-    const formattedPosts = posts.map((post) => {
-      const obj = post.toObject();
-
-      obj.isOwner =
-        obj.user?._id?.toString() === currentUserId?.toString();
-
-      return obj;
-    });
+    const formattedPosts = posts.map((post) =>
+      formatPost(post, currentUserId)
+    );
 
     res.json({
       success: true,
@@ -68,7 +128,7 @@ exports.getPosts = async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Posts fetch failed",
     });
   }
 };
@@ -76,8 +136,8 @@ exports.getPosts = async (req, res) => {
 // UPDATE POST
 exports.updatePost = async (req, res) => {
   try {
-    const currentUserId =
-      req.user?.id || req.user?._id || req.user?.userId;
+    const currentUserId = getCurrentUserId(req);
+    const postId = getPostId(req);
 
     if (!currentUserId) {
       return res.status(401).json({
@@ -86,7 +146,7 @@ exports.updatePost = async (req, res) => {
       });
     }
 
-    const post = await Post.findById(req.params.postId);
+    const post = await Post.findById(postId);
 
     if (!post) {
       return res.status(404).json({
@@ -102,26 +162,45 @@ exports.updatePost = async (req, res) => {
       });
     }
 
-    post.content = req.body.content;
+    const { content = "", tags = "", mentionIds = "[]" } = req.body;
+
+    const imagePath = req.file ? `/uploads/posts/${req.file.filename}` : post.image;
+
+    if (!content.trim() && !imagePath) {
+      return res.status(400).json({
+        success: false,
+        message: "Post content or image required",
+      });
+    }
+
+    const autoTags = extractTags(content);
+
+    const manualTags = tags
+      ? tags
+          .split(",")
+          .map((tag) => tag.trim().replace("#", "").toLowerCase())
+          .filter(Boolean)
+      : post.tags || [];
+
+    post.content = content;
+    post.image = imagePath;
+    post.tags = [...new Set([...autoTags, ...manualTags])];
+    post.mentions = parseJsonArray(mentionIds);
+
     await post.save();
 
-    const updatedPost = await Post.findById(post._id)
-      .populate("user", "_id name email profilePic")
-      .populate("comments.user", "_id name email profilePic");
+    const updatedPost = await populatePostQuery(Post.findById(post._id));
 
     res.json({
       success: true,
-      post: {
-        ...updatedPost.toObject(),
-        isOwner: true,
-      },
+      post: formatPost(updatedPost, currentUserId),
     });
   } catch (error) {
     console.log("UPDATE POST ERROR:", error);
 
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Post update failed",
     });
   }
 };
@@ -129,10 +208,8 @@ exports.updatePost = async (req, res) => {
 // DELETE POST
 exports.deletePost = async (req, res) => {
   try {
-    const { postId } = req.params;
-
-    const currentUserId =
-      req.user?.id || req.user?._id || req.user?.userId;
+    const currentUserId = getCurrentUserId(req);
+    const postId = getPostId(req);
 
     if (!currentUserId) {
       return res.status(401).json({
@@ -168,7 +245,7 @@ exports.deletePost = async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Delete failed",
     });
   }
 };
@@ -176,8 +253,8 @@ exports.deletePost = async (req, res) => {
 // LIKE / UNLIKE POST
 exports.likePost = async (req, res) => {
   try {
-    const currentUserId =
-      req.user?.id || req.user?._id || req.user?.userId;
+    const currentUserId = getCurrentUserId(req);
+    const postId = getPostId(req);
 
     if (!currentUserId) {
       return res.status(401).json({
@@ -186,7 +263,7 @@ exports.likePost = async (req, res) => {
       });
     }
 
-    const post = await Post.findById(req.params.postId);
+    const post = await Post.findById(postId);
 
     if (!post) {
       return res.status(404).json({
@@ -209,24 +286,18 @@ exports.likePost = async (req, res) => {
 
     await post.save();
 
-    const updatedPost = await Post.findById(post._id)
-      .populate("user", "_id name email profilePic")
-      .populate("comments.user", "_id name email profilePic");
+    const updatedPost = await populatePostQuery(Post.findById(postId));
 
     res.json({
       success: true,
-      post: {
-        ...updatedPost.toObject(),
-        isOwner:
-          updatedPost.user?._id?.toString() === currentUserId.toString(),
-      },
+      post: formatPost(updatedPost, currentUserId),
     });
   } catch (error) {
     console.log("LIKE POST ERROR:", error);
 
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Like failed",
     });
   }
 };
@@ -234,8 +305,8 @@ exports.likePost = async (req, res) => {
 // COMMENT POST
 exports.commentPost = async (req, res) => {
   try {
-    const currentUserId =
-      req.user?.id || req.user?._id || req.user?.userId;
+    const currentUserId = getCurrentUserId(req);
+    const postId = getPostId(req);
 
     if (!currentUserId) {
       return res.status(401).json({
@@ -244,7 +315,7 @@ exports.commentPost = async (req, res) => {
       });
     }
 
-    const { text } = req.body;
+    const { text, mentionIds = [] } = req.body;
 
     if (!text || !text.trim()) {
       return res.status(400).json({
@@ -253,7 +324,7 @@ exports.commentPost = async (req, res) => {
       });
     }
 
-    const post = await Post.findById(req.params.postId);
+    const post = await Post.findById(postId);
 
     if (!post) {
       return res.status(404).json({
@@ -265,39 +336,48 @@ exports.commentPost = async (req, res) => {
     post.comments.push({
       user: currentUserId,
       text,
+      mentions: parseJsonArray(mentionIds),
     });
 
     await post.save();
 
-    const updatedPost = await Post.findById(post._id)
-      .populate("user", "_id name email profilePic")
-      .populate("comments.user", "_id name email profilePic");
+    const updatedPost = await populatePostQuery(Post.findById(postId));
 
     res.json({
       success: true,
-      post: {
-        ...updatedPost.toObject(),
-        isOwner:
-          updatedPost.user?._id?.toString() === currentUserId.toString(),
-      },
+      post: formatPost(updatedPost, currentUserId),
     });
   } catch (error) {
     console.log("COMMENT POST ERROR:", error);
 
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Comment failed",
     });
   }
 };
+
 // REPLY COMMENT
 exports.replyComment = async (req, res) => {
   try {
-    const currentUserId =
-      req.user?.id || req.user?._id || req.user?.userId;
+    const currentUserId = getCurrentUserId(req);
+
+    if (!currentUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found in token",
+      });
+    }
 
     const { postId, commentId } = req.params;
-    const { text } = req.body;
+    const { text, mentionIds = [] } = req.body;
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Reply text is required",
+      });
+    }
 
     const post = await Post.findById(postId);
 
@@ -320,25 +400,23 @@ exports.replyComment = async (req, res) => {
     comment.replies.push({
       user: currentUserId,
       text,
+      mentions: parseJsonArray(mentionIds),
     });
 
     await post.save();
 
-    const updatedPost = await Post.findById(post._id)
-      .populate("user", "_id name profilePic")
-      .populate("comments.user", "_id name profilePic")
-      .populate("comments.replies.user", "_id name profilePic");
+    const updatedPost = await populatePostQuery(Post.findById(postId));
 
     res.json({
       success: true,
-      post: updatedPost,
+      post: formatPost(updatedPost, currentUserId),
     });
   } catch (error) {
-    console.log(error);
+    console.log("REPLY COMMENT ERROR:", error);
 
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Reply failed",
     });
   }
 };
@@ -346,14 +424,34 @@ exports.replyComment = async (req, res) => {
 // LIKE COMMENT
 exports.likeComment = async (req, res) => {
   try {
-    const currentUserId =
-      req.user?.id || req.user?._id || req.user?.userId;
+    const currentUserId = getCurrentUserId(req);
+
+    if (!currentUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found in token",
+      });
+    }
 
     const { postId, commentId } = req.params;
 
     const post = await Post.findById(postId);
 
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
     const comment = post.comments.id(commentId);
+
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        message: "Comment not found",
+      });
+    }
 
     const alreadyLiked = comment.likes.some(
       (id) => id.toString() === currentUserId.toString()
@@ -369,21 +467,18 @@ exports.likeComment = async (req, res) => {
 
     await post.save();
 
-    const updatedPost = await Post.findById(post._id)
-      .populate("user", "_id name profilePic")
-      .populate("comments.user", "_id name profilePic")
-      .populate("comments.replies.user", "_id name profilePic");
+    const updatedPost = await populatePostQuery(Post.findById(postId));
 
     res.json({
       success: true,
-      post: updatedPost,
+      post: formatPost(updatedPost, currentUserId),
     });
   } catch (error) {
-    console.log(error);
+    console.log("LIKE COMMENT ERROR:", error);
 
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Comment like failed",
     });
   }
 };
@@ -391,16 +486,43 @@ exports.likeComment = async (req, res) => {
 // LIKE REPLY
 exports.likeReply = async (req, res) => {
   try {
-    const currentUserId =
-      req.user?.id || req.user?._id || req.user?.userId;
+    const currentUserId = getCurrentUserId(req);
+
+    if (!currentUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found in token",
+      });
+    }
 
     const { postId, commentId, replyId } = req.params;
 
     const post = await Post.findById(postId);
 
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
     const comment = post.comments.id(commentId);
 
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        message: "Comment not found",
+      });
+    }
+
     const reply = comment.replies.id(replyId);
+
+    if (!reply) {
+      return res.status(404).json({
+        success: false,
+        message: "Reply not found",
+      });
+    }
 
     const alreadyLiked = reply.likes.some(
       (id) => id.toString() === currentUserId.toString()
@@ -416,21 +538,18 @@ exports.likeReply = async (req, res) => {
 
     await post.save();
 
-    const updatedPost = await Post.findById(post._id)
-      .populate("user", "_id name profilePic")
-      .populate("comments.user", "_id name profilePic")
-      .populate("comments.replies.user", "_id name profilePic");
+    const updatedPost = await populatePostQuery(Post.findById(postId));
 
     res.json({
       success: true,
-      post: updatedPost,
+      post: formatPost(updatedPost, currentUserId),
     });
   } catch (error) {
-    console.log(error);
+    console.log("LIKE REPLY ERROR:", error);
 
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Reply like failed",
     });
   }
 };

@@ -67,6 +67,17 @@ const jobSchema = new mongoose.Schema({
 
   // 🔥 AI Recommendation er jonno IMPORTANT
   skills: [String],
+  searchedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    source: {
+      type: String,
+      default: "search",
+    },
 
 }, { timestamps: true });
 

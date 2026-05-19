@@ -1,5 +1,6 @@
 const Job = require("../models/job");
 const fetchJobsByLocation = require("../services/fetchJobsByLocation");
+const saveJobsToDB = require("../utils/saveJobsToDB");
 const axios = require("axios");
 // CREATE
 exports.createJob = async (req, res) => {
@@ -56,12 +57,17 @@ exports.searchJobs = async (req, res) => {
   const { query } = req.query;
 
   try {
+    const userId =
+      req.user?.id ||
+      req.user?._id ||
+      req.user?.userId;
+
     let allJobs = [];
     let newJobs = [];
 
     let currentPage = 1;
     let hasMore = true;
-    const MAX_PAGES = 1; // 🔥 safety limit (changeable)
+    const MAX_PAGES = 1;
 
     while (hasMore && currentPage <= MAX_PAGES) {
       const response = await axios.get(
@@ -72,66 +78,95 @@ exports.searchJobs = async (req, res) => {
             page: currentPage.toString(),
             num_pages: "1",
             country: "in",
-            date_posted: "all"
+            date_posted: "all",
           },
           headers: {
             "x-rapidapi-key": process.env.RAPIDAPI_KEY,
-            "x-rapidapi-host": "jsearch.p.rapidapi.com"
-          }
+            "x-rapidapi-host": "jsearch.p.rapidapi.com",
+          },
         }
       );
 
-      const jobs = response.data.data;
+      const jobs = response.data.data || [];
 
-      if (!jobs || jobs.length === 0) {
+      if (!jobs.length) {
         hasMore = false;
         break;
       }
 
       allJobs.push(...jobs);
 
-      // 🔥 DB optimization (no N+1 query)
-      const jobIds = jobs.map(job => job.job_id);
+      const jobIds = jobs
+        .map((job) => job.job_id)
+        .filter(Boolean);
 
       const existingJobs = await Job.find(
         { job_id: { $in: jobIds } },
         { job_id: 1 }
       );
 
-      const existingIds = new Set(existingJobs.map(j => j.job_id));
+      const existingIds = new Set(
+        existingJobs.map((job) => job.job_id)
+      );
 
       for (let job of jobs) {
+        const jobData = {
+          job_id: job.job_id,
+          title: job.job_title,
+          company: job.employer_name,
+          company_logo: job.employer_logo,
+          company_website: job.employer_website,
+          publisher: job.job_publisher,
+
+          employment_type: job.job_employment_type,
+          employment_types: job.job_employment_types || [],
+
+          apply_link:
+            job.job_apply_link ||
+            job.apply_options?.[0]?.apply_link ||
+            "",
+
+          apply_options: job.apply_options || [],
+          description: job.job_description,
+          is_remote: job.job_is_remote,
+
+          posted_at: job.job_posted_at,
+          posted_timestamp: job.job_posted_at_timestamp,
+          posted_date: job.job_posted_at_datetime_utc,
+
+          location: job.job_location,
+          city: job.job_city,
+          state: job.job_state,
+          country: job.job_country,
+          latitude: job.job_latitude,
+          longitude: job.job_longitude,
+
+          salary: job.job_salary_string,
+          min_salary: job.job_min_salary,
+          max_salary: job.job_max_salary,
+          salary_period: job.job_salary_period,
+
+          benefits: job.job_benefits_strings || [],
+          highlights: job.job_highlights,
+
+          source: "jsearch",
+        };
+
         if (!existingIds.has(job.job_id)) {
-          newJobs.push({
-            job_id: job.job_id,
-            title: job.job_title,
-            company: job.employer_name,
-            company_logo: job.employer_logo,
-            company_website: job.employer_website,
-            publisher: job.job_publisher,
-            employment_type: job.job_employment_type,
-            employment_types: job.job_employment_types,
-            apply_link: job.job_apply_link,
-            apply_options: job.apply_options,
-            description: job.job_description,
-            is_remote: job.job_is_remote,
-            posted_at: job.job_posted_at,
-            posted_timestamp: job.job_posted_at_timestamp,
-            posted_date: job.job_posted_at_datetime_utc,
-            location: job.job_location,
-            city: job.job_city,
-            state: job.job_state,
-            country: job.job_country,
-            latitude: job.job_latitude,
-            longitude: job.job_longitude,
-            salary: job.job_salary_string,
-            min_salary: job.job_min_salary,
-            max_salary: job.job_max_salary,
-            salary_period: job.job_salary_period,
-            benefits: job.job_benefits_strings || [],
-            highlights: job.job_highlights,
-            skills: extractSkills(job.job_description)
-          });
+          if (userId) {
+            jobData.searchedBy = [userId];
+          }
+
+          newJobs.push(jobData);
+        } else if (userId) {
+          await Job.updateOne(
+            { job_id: job.job_id },
+            {
+              $addToSet: {
+                searchedBy: userId,
+              },
+            }
+          );
         }
       }
 
@@ -139,37 +174,30 @@ exports.searchJobs = async (req, res) => {
 
       currentPage++;
 
-      // 🔥 rate limit avoid
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
-    // 🔥 bulk insert
-    // Step 1: get all incoming job_ids
-    const jobIds = newJobs.map(job => job.job_id);
-
-    // Step 2: find existing jobs
-    const existingJobs = await Job.find({ job_id: { $in: jobIds } });
-
-    // Step 3: create set of existing IDs
-    const existingIds = new Set(existingJobs.map(job => job.job_id));
-
-    // Step 4: filter new jobs
-    const filteredJobs = newJobs.filter(job => !existingIds.has(job.job_id));
-
-    // Step 5: insert only new ones
-    if (filteredJobs.length > 0) {
-      await Job.insertMany(filteredJobs);
-      console.log(`✅ ${filteredJobs.length} new jobs saved`);
+    if (newJobs.length > 0) {
+      await Job.insertMany(newJobs, { ordered: false });
+      console.log(`✅ ${newJobs.length} new jobs saved`);
     }
 
     res.json({
+      success: true,
       totalFetched: allJobs.length,
       totalSaved: newJobs.length,
-      jobs: allJobs
+      jobs: allJobs,
     });
-
   } catch (error) {
-    console.error("Search Job Error:", error.message);
-    res.status(500).json({ error: "Failed to fetch jobs" });
+    console.error(
+      "Search Job Error:",
+      error.response?.data || error.message
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch jobs",
+      error: error.message,
+    });
   }
 };

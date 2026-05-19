@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   getPosts,
   createPost,
@@ -15,27 +15,97 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const Feed = () => {
   const [posts, setPosts] = useState([]);
   const [content, setContent] = useState("");
+  const [tagInput, setTagInput] = useState("");
+  const [mentionInput, setMentionInput] = useState("");
+  const [mentionIds, setMentionIds] = useState([]);
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const fileRef = useRef(null);
 
   const user = JSON.parse(localStorage.getItem("user")) || {};
 
   const loadPosts = async () => {
-    const data = await getPosts();
-    setPosts(data.posts || []);
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        console.log("No token found");
+        setPosts([]);
+        return;
+      }
+
+      const data = await getPosts();
+
+      console.log("POSTS FROM API:", data);
+
+      setPosts(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.log("GET POSTS ERROR:", error.response?.data || error.message);
+      setPosts([]);
+    }
   };
 
   useEffect(() => {
     loadPosts();
   }, []);
 
-  const handleCreate = async () => {
-    if (!content.trim()) return;
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    setLoading(true);
-    await createPost(content);
-    setContent("");
-    await loadPosts();
-    setLoading(false);
+    setImage(file);
+    setPreview(URL.createObjectURL(file));
+  };
+
+  const removeImage = () => {
+    setImage(null);
+    setPreview("");
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const addMentionText = () => {
+    if (!mentionInput.trim()) return;
+
+    const name = mentionInput.trim();
+
+    if (!content.includes(`@${name}`)) {
+      setContent((prev) => `${prev} @${name}`);
+    }
+
+    setMentionInput("");
+  };
+
+  const handleCreate = async () => {
+    if (!content.trim() && !image) return;
+
+    try {
+      setLoading(true);
+
+      const formData = new FormData();
+      formData.append("content", content);
+      formData.append("tags", tagInput);
+      formData.append("mentionIds", JSON.stringify(mentionIds));
+
+      if (image) {
+        formData.append("image", image);
+      }
+
+      await createPost(formData);
+      await loadPosts();
+
+      setContent("");
+      setTagInput("");
+      setMentionInput("");
+      setMentionIds([]);
+      removeImage();
+    } catch (error) {
+      console.log(error);
+      alert(error.response?.data?.message || "Post create failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -51,14 +121,32 @@ const Feed = () => {
   };
 
   const handleLike = async (id) => {
-    await likePost(id);
-    loadPosts();
+    try {
+      const updatedPost = await likePost(id);
+
+      setPosts((prev) =>
+        prev.map((post) => (post._id === id ? updatedPost : post))
+      );
+    } catch (error) {
+      console.log(error.response?.data || error.message);
+    }
   };
 
   const handleComment = async (id, text) => {
     if (!text.trim()) return;
-    await commentPost(id, text);
-    loadPosts();
+
+    try {
+      const updatedPost = await commentPost(id, {
+        text,
+        mentionIds: [],
+      });
+
+      setPosts((prev) =>
+        prev.map((post) => (post._id === id ? updatedPost : post))
+      );
+    } catch (error) {
+      console.log(error.response?.data || error.message);
+    }
   };
 
   return (
@@ -118,6 +206,13 @@ const Feed = () => {
           white-space: pre-wrap;
         }
 
+        .post-image {
+          width: 100%;
+          max-height: 460px;
+          object-fit: cover;
+          border-radius: 22px;
+        }
+
         .action-btn {
           border: none;
           background: #f3f6ff;
@@ -155,6 +250,24 @@ const Feed = () => {
           border-radius: 999px;
         }
 
+        .tag-badge {
+          background: #eef2ff;
+          color: #6366f1;
+          padding: 7px 12px;
+          border-radius: 999px;
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        .mention-badge {
+          background: #e0f2fe;
+          color: #0369a1;
+          padding: 7px 12px;
+          border-radius: 999px;
+          font-size: 13px;
+          font-weight: 600;
+        }
+
         @keyframes fadeUp {
           from {
             opacity: 0;
@@ -174,23 +287,97 @@ const Feed = () => {
           <textarea
             className="form-control border-0 shadow-sm mb-3"
             rows="4"
-            placeholder="What's on your mind?"
+            maxLength="500"
+            placeholder="What's on your mind? Use #tag and @mention"
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
 
+          {preview && (
+            <div className="position-relative mb-3">
+              <img src={preview} alt="Preview" className="post-image" />
+
+              <button
+                className="btn btn-danger btn-sm position-absolute"
+                style={{
+                  top: "10px",
+                  right: "10px",
+                  borderRadius: "50%",
+                }}
+                onClick={removeImage}
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
+            </div>
+          )}
+
+          <div className="row g-2 mb-3">
+            <div className="col-md-6">
+              <input
+                className="form-control"
+                placeholder="Add tags: react, job, hiring"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                style={{ borderRadius: "14px" }}
+              />
+            </div>
+
+            <div className="col-md-6 d-flex gap-2">
+              <input
+                className="form-control"
+                placeholder="Mention name: Rahul"
+                value={mentionInput}
+                onChange={(e) => setMentionInput(e.target.value)}
+                style={{ borderRadius: "14px" }}
+              />
+
+              <button
+                className="btn btn-outline-primary"
+                style={{ borderRadius: "14px" }}
+                onClick={addMentionText}
+              >
+                @
+              </button>
+            </div>
+          </div>
+
           <div className="d-flex justify-content-between align-items-center">
-            <small className="text-muted">{content.length}/500 characters</small>
+            <div className="d-flex align-items-center gap-3">
+              <small className="text-muted">{content.length}/500 characters</small>
+
+              <button
+                className="btn btn-light border d-flex align-items-center gap-2"
+                onClick={() => fileRef.current.click()}
+                style={{ borderRadius: "999px" }}
+              >
+                <i className="bi bi-image"></i>
+                Photo
+              </button>
+
+              <input
+                type="file"
+                ref={fileRef}
+                accept="image/*"
+                onChange={handleImageChange}
+                style={{ display: "none" }}
+              />
+            </div>
 
             <button
               className="btn btn-primary px-5 rounded-pill"
               onClick={handleCreate}
-              disabled={loading || !content.trim()}
+              disabled={loading || (!content.trim() && !image)}
             >
               {loading ? "Posting..." : "Post"}
             </button>
           </div>
         </div>
+
+        {posts.length === 0 && (
+          <div className="glass-card p-4 text-center text-muted">
+            No posts found
+          </div>
+        )}
 
         {posts.map((post) => (
           <PostCard
@@ -216,6 +403,12 @@ const PostCard = ({ post, currentUser, onDelete, onLike, onComment, reload }) =>
       ? post.user.profilePic
       : `${API}${post.user.profilePic}`
     : `https://ui-avatars.com/api/?name=${post.user?.name || "User"}&background=0d6efd&color=fff`;
+
+  const postImage = post.image
+    ? post.image.startsWith("http")
+      ? post.image
+      : `${API}${post.image}`
+    : "";
 
   return (
     <div className="glass-card post-card p-4 mb-4">
@@ -245,7 +438,33 @@ const PostCard = ({ post, currentUser, onDelete, onLike, onComment, reload }) =>
         )}
       </div>
 
-      <p className="post-content mt-4 mb-3">{post.content}</p>
+      {post.content && (
+        <p className="post-content mt-4 mb-3">{post.content}</p>
+      )}
+
+      {post.tags?.length > 0 && (
+        <div className="d-flex flex-wrap gap-2 mb-3">
+          {post.tags.map((tag, index) => (
+            <span key={index} className="tag-badge">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {post.mentions?.length > 0 && (
+        <div className="d-flex flex-wrap gap-2 mb-3">
+          {post.mentions.map((u) => (
+            <span key={u._id} className="mention-badge">
+              @{u.name}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {postImage && (
+        <img src={postImage} alt="Post" className="post-image mb-3" />
+      )}
 
       <div className="d-flex gap-2 border-top border-bottom py-2">
         <button className="action-btn" onClick={() => onLike(post._id)}>
@@ -306,7 +525,11 @@ const CommentCard = ({ comment, postId, reload }) => {
   const handleReply = async () => {
     if (!reply.trim()) return;
 
-    await replyComment(postId, comment._id, reply);
+    await replyComment(postId, comment._id, {
+      text: reply,
+      mentionIds: [],
+    });
+
     setReply("");
     setShowReply(false);
     reload();
@@ -328,6 +551,16 @@ const CommentCard = ({ comment, postId, reload }) => {
         <strong>{comment.user?.name || "User"}</strong>
 
         <p className="mb-1 mt-1 small">{comment.text}</p>
+
+        {comment.mentions?.length > 0 && (
+          <div className="d-flex flex-wrap gap-2 mb-1">
+            {comment.mentions.map((u) => (
+              <span key={u._id} className="mention-badge">
+                @{u.name}
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className="d-flex gap-3 mt-2">
           <button
@@ -371,6 +604,16 @@ const CommentCard = ({ comment, postId, reload }) => {
             <strong>{r.user?.name || "User"}</strong>
 
             <p className="mb-1 mt-1 small">{r.text}</p>
+
+            {r.mentions?.length > 0 && (
+              <div className="d-flex flex-wrap gap-2 mb-1">
+                {r.mentions.map((u) => (
+                  <span key={u._id} className="mention-badge">
+                    @{u.name}
+                  </span>
+                ))}
+              </div>
+            )}
 
             <button
               className="btn btn-sm btn-link p-0 text-decoration-none"
