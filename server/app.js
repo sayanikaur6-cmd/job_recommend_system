@@ -8,6 +8,7 @@ const session = require("express-session");
 const passport = require("./config/passport");
 const profileSearchRoutes = require("./routes/profileSearchRoutes");
 const postRoutes = require("./routes/postRoutes");
+const chatbotRoutes = require("./routes/chatbotRoutes");
 const recommendationRoutes = require("./routes/recommendationRoutes");
 
 app.use(cors());
@@ -38,6 +39,7 @@ app.use("/api/profile-search", profileSearchRoutes);
 app.use("/api/bio", require("./routes/bioRoutes"));
 app.use("/api/posts", postRoutes);
 app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/chatbot", chatbotRoutes);
 app.use("/uploads", express.static("uploads"));
 app.get("/get-state", async (req, res) => {
   const { lat, lng } = req.query;

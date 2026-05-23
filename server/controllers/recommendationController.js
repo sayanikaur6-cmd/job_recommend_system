@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const Job = require("../models/job");
+const { sendJobAlertEmail } = require("../services/notificationService");
 
 const normalize = (text = "") =>
   text
@@ -69,6 +70,8 @@ exports.getRecommendedJobs = async (req, res) => {
       req.user?._id ||
       req.user?.userId;
 
+    const shouldSendEmail = req.query.sendEmail === "true";
+
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -89,33 +92,61 @@ exports.getRecommendedJobs = async (req, res) => {
       .map(getSkillName)
       .filter(Boolean);
 
-    const jobs = await Job.find()
+    let jobs = await Job.find({
+      searchedBy: userId,
+    })
       .sort({ createdAt: -1 })
       .limit(500);
 
-    const recommendedJobs = jobs
-      .map((job) => {
-        const result = calculateMatch(userSkills, job);
+    if (jobs.length === 0) {
+      jobs = await Job.find()
+        .sort({ createdAt: -1 })
+        .limit(500);
+    }
 
-        return {
-          ...job.toObject(),
-          matchScore: result.matchScore,
-          matchedSkills: result.matchedSkills,
-        };
-      })
-      .sort((a, b) => b.matchScore - a.matchScore)
-      .slice(0, 30);
+    let recommendedJobs = [];
 
-    console.log("USER ID:", userId);
-    console.log("USER SKILLS:", userSkills);
-    console.log("TOTAL JOBS:", jobs.length);
-    console.log("FINAL RECOMMENDED:", recommendedJobs.length);
+    if (userSkills.length > 0) {
+      recommendedJobs = jobs
+        .map((job) => {
+          const result = calculateMatch(userSkills, job);
+
+          return {
+            ...job.toObject(),
+            matchScore: result.matchScore,
+            matchedSkills: result.matchedSkills,
+            recommendationType: "skill_based",
+          };
+        })
+        .filter((job) => job.matchScore > 0)
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 30);
+    }
+
+    if (recommendedJobs.length === 0) {
+      recommendedJobs = jobs.slice(0, 30).map((job) => ({
+        ...job.toObject(),
+        matchScore: userSkills.length > 0 ? 10 : 0,
+        matchedSkills: [],
+        recommendationType:
+          userSkills.length > 0
+            ? "searched_jobs_fallback"
+            : "search_history_based",
+      }));
+    }
+
+    let emailSent = false;
+
+    if (shouldSendEmail && recommendedJobs.length > 0 && user.email) {
+      emailSent = await sendJobAlertEmail(user, recommendedJobs);
+    }
 
     res.json({
       success: true,
       userSkills,
       totalJobs: jobs.length,
       totalRecommended: recommendedJobs.length,
+      emailSent,
       jobs: recommendedJobs,
     });
   } catch (error) {

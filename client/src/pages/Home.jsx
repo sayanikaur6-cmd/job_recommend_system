@@ -3,6 +3,7 @@ import JobCard from "../components/JobCard";
 import "../index.css";
 import { Link } from "react-router-dom";
 import { handleGoogleRedirect } from "../utils/auth";
+import ChatbotWidget from "../components/ChatbotWidget";
 import RecommendedJobs from "../components/RecommendedJobs";
 
 export default function Home() {
@@ -662,6 +663,7 @@ export default function Home() {
           )}
         </div>
       </section>
+      <ChatbotWidget />
     </div>
   );
 }
