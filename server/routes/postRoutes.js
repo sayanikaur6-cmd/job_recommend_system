@@ -15,6 +15,7 @@ const {
   replyComment,
   likeComment,
   likeReply,
+  getMyPosts,
 } = require("../controllers/postController");
 
 // CREATE POST
@@ -27,6 +28,12 @@ router.post(
 
 // GET POSTS
 router.get("/", authMiddleware, getPosts);
+
+router.get(
+ "/my-posts",
+ authMiddleware,
+ getMyPosts
+);
 
 // UPDATE POST
 router.put(

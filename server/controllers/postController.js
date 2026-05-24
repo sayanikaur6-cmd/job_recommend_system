@@ -553,3 +553,23 @@ exports.likeReply = async (req, res) => {
     });
   }
 };
+
+exports.getMyPosts = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const posts = await Post.find({ user: userId })
+      .populate("user", "name profilePic")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      posts,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

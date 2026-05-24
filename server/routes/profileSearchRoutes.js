@@ -10,5 +10,4 @@ const authMiddleware = require("../middleware/auth");
 
 router.get("/search", authMiddleware, searchProfiles);
 router.get("/:userId", authMiddleware, getPublicProfile);
-
 module.exports = router;

@@ -10,6 +10,7 @@ const profileSearchRoutes = require("./routes/profileSearchRoutes");
 const postRoutes = require("./routes/postRoutes");
 const chatbotRoutes = require("./routes/chatbotRoutes");
 const recommendationRoutes = require("./routes/recommendationRoutes");
+const connectionRoutes = require("./routes/connectionRoutes");
 
 app.use(cors());
 app.use(express.json());
@@ -39,6 +40,7 @@ app.use("/api/profile-search", profileSearchRoutes);
 app.use("/api/bio", require("./routes/bioRoutes"));
 app.use("/api/posts", postRoutes);
 app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/connections", connectionRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/uploads", express.static("uploads"));
 app.get("/get-state", async (req, res) => {
