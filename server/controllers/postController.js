@@ -552,8 +552,6 @@ exports.likeReply = async (req, res) => {
       message: error.message || "Reply like failed",
     });
   }
-<<<<<<< HEAD
-=======
 };
 
 exports.getMyPosts = async (req, res) => {
@@ -574,5 +572,4 @@ exports.getMyPosts = async (req, res) => {
       message: error.message,
     });
   }
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 };

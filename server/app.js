@@ -11,7 +11,6 @@ const postRoutes = require("./routes/postRoutes");
 const chatbotRoutes = require("./routes/chatbotRoutes");
 const jobActivityRoutes = require("./routes/jobActivityRoutes");
 const recommendationRoutes = require("./routes/recommendationRoutes");
-const recommendationRoutes = require("./routes/recommendationRoutes");
 const connectionRoutes = require("./routes/connectionRoutes");
 
 app.use(cors());

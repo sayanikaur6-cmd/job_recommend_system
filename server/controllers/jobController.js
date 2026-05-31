@@ -200,7 +200,6 @@ exports.searchJobs = async (req, res) => {
       error: error.message,
     });
   }
-<<<<<<< HEAD
 };
 exports.applyJob = async (req, res) => {
   try {
@@ -240,6 +239,4 @@ exports.applyJob = async (req, res) => {
       message: error.message,
     });
   }
-=======
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 };
