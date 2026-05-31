@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  searchProfiles,
-  sendConnectionRequest,
-} from "../api/profileSearchApi";
+import { searchProfiles, sendConnectionRequest } from "../api/profileSearchApi";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -194,7 +191,14 @@ const SearchProfiles = () => {
                       cursor: "pointer",
                       transition: "0.25s ease",
                     }}
-                    onClick={() => navigate(`/public-profile/${user._id}`)}
+                    onClick={() =>
+                      navigate("/profile", {
+                        state: {
+                          viewOnly: true,
+                          profileUserId: user._id,
+                        },
+                      })
+                    }
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "translateY(-6px)";
                       e.currentTarget.style.boxShadow =
@@ -209,8 +213,7 @@ const SearchProfiles = () => {
                     <div
                       style={{
                         height: 80,
-                        background:
-                          "linear-gradient(135deg, #0d6efd, #6f42c1)",
+                        background: "linear-gradient(135deg, #0d6efd, #6f42c1)",
                       }}
                     ></div>
 

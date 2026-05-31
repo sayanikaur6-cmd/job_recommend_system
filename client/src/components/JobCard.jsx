@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom";
+import { saveJob, applyJob } from "../api/jobActivityApi";
+
 
 export default function JobCard({ job }) {
   const navigate = useNavigate();
@@ -18,7 +20,42 @@ export default function JobCard({ job }) {
   const handleDetailsClick = () => {
     navigate("/job-details", { state: { job } }); // 🔥 go to details page
   };
+  const handleSave = async () => {
+    try {
+      await saveJob(job.job_id);
+      alert("Job saved");
+    } catch (error) {
+      alert(error.response?.data?.message || "Save failed");
+    }
+  };
 
+  const handleApply = async (job) => {
+    try {
+      await applyJob(job._id || job.job_id);
+
+      if (job.apply_link || job.applyLink) {
+        window.open(job.apply_link || job.applyLink, "_blank");
+      }
+
+      alert("Application added to tracking");
+    } catch (error) {
+      alert(error.response?.data?.message || "Apply tracking failed");
+    }
+  };
+
+  const handleApplyTrack = async (job) => {
+    try {
+      await applyJob(job.job_id);
+
+      if (job.apply_link || job.applyLink) {
+        window.open(job.apply_link || job.applyLink, "_blank");
+      }
+
+      alert("Application added to tracking");
+    } catch (error) {
+      alert(error.response?.data?.message || "Apply tracking failed");
+    }
+  };
   return (
     <div
       className="card border-0 rounded-4 shadow-sm h-100"
@@ -136,10 +173,16 @@ export default function JobCard({ job }) {
             >
               Details
             </button>
-
+            {/* SAVE */}
+            <button
+              className="btn btn-outline-primary rounded-pill"
+              onClick={handleSave}
+            >
+              <i className="bi bi-bookmark"></i> Save
+            </button>
             {/* APPLY */}
             <button
-              onClick={handleApplyClick}
+              onClick={() => handleApplyTrack(job)}
               className="btn btn-sm rounded-pill px-3"
               style={{
                 background:

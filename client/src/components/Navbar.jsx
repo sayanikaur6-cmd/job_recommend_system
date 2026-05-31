@@ -12,7 +12,6 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
 
   return (
     <nav className="d-flex justify-content-between align-items-center px-4 py-3 shadow-sm">
-
       {/* LOGO */}
       <h3 style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
         Career<span className="text-primary">Sync</span>
@@ -20,7 +19,6 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
 
       {/* RIGHT SIDE */}
       <div className="d-flex align-items-center gap-3">
-
         {/* 🔍 Search Component */}
         <AnimatedSearch />
 
@@ -54,25 +52,49 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
             {/* 🔔 CONNECTION REQUESTS */}
             <button
               className="btn btn-outline-primary d-flex align-items-center gap-2"
-              onClick={() => navigate("/connect")}
+              onClick={() => navigate("/feed")}
             >
-              <i className="bi bi-person-plus-fill"></i>
-              Connect
+              <i className="bi bi-file-post"></i>
+              Feed
             </button>
 
-            {/* 👤 PROFILE */}
-            <i
-              className="bi bi-person-circle"
-              style={{ fontSize: "26px", cursor: "pointer" }}
-              title="Profile"
-              onClick={() => navigate("/profile")}
-            ></i>
+            
+            <div className="dropdown">
+              <i
+                className="bi bi-person-circle dropdown-toggle"
+                style={{ fontSize: "26px", cursor: "pointer" }}
+                data-bs-toggle="dropdown"
+              ></i>
+
+              <ul className="dropdown-menu dropdown-menu-end shadow border-0 rounded-4">
+                <li>
+                  <button className="dropdown-item" onClick={() => navigate("/profile")}>
+                    <i className="bi bi-person me-2"></i>
+                    View Profile
+                  </button>
+                </li>
+
+                <li>
+                  <button className="dropdown-item" onClick={() => navigate("/saved-jobs")}>
+                    <i className="bi bi-bookmark-heart me-2"></i>
+                    Saved Jobs
+                  </button>
+                </li>
+
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/application-tracking")}
+                  >
+                    <i className="bi bi-clipboard-check me-2"></i>
+                    Application Tracking
+                  </button>
+                </li>
+              </ul>
+            </div>
 
             {/* 🚪 LOGOUT */}
-            <button
-              className="btn btn-danger btn-sm"
-              onClick={handleLogout}
-            >
+            <button className="btn btn-danger btn-sm" onClick={handleLogout}>
               Logout
             </button>
           </>
