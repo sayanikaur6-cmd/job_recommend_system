@@ -9,6 +9,7 @@ const passport = require("./config/passport");
 const profileSearchRoutes = require("./routes/profileSearchRoutes");
 const postRoutes = require("./routes/postRoutes");
 const chatbotRoutes = require("./routes/chatbotRoutes");
+const jobActivityRoutes = require("./routes/jobActivityRoutes");
 const recommendationRoutes = require("./routes/recommendationRoutes");
 const connectionRoutes = require("./routes/connectionRoutes");
 
@@ -40,6 +41,9 @@ app.use("/api/profile-search", profileSearchRoutes);
 app.use("/api/bio", require("./routes/bioRoutes"));
 app.use("/api/posts", postRoutes);
 app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/connections", require("./routes/connectionRoutes"));
+app.use("/api/job-activity", jobActivityRoutes);
 app.use("/api/connections", connectionRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/uploads", express.static("uploads"));

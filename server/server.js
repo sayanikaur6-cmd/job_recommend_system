@@ -4,6 +4,7 @@ const app = require("./app");
 const session = require("express-session");
 const startJobAlertCron = require("./jobs/jobAlertCron");
 
+// startJobAlertCron();
 //startJobAlertCron();
 connectDB();
 

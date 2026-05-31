@@ -1,7 +1,13 @@
+<<<<<<< HEAD
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { searchProfiles, sendConnectionRequest } from "../api/profileSearchApi";
+=======
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { searchUsers } from "../api/userApi";
 import { sendConnectionRequest } from "../api/connectionApi";
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -576,9 +582,105 @@ const SearchProfiles = () => {
                 <div className="profile-card" onClick={() => openProfile(user._id)}>
                   <div className="profile-cover"></div>
 
+<<<<<<< HEAD
+        {searched && !loading && users.length === 0 && (
+          <div
+            className="card border-0 shadow-sm text-center p-5"
+            style={{ borderRadius: 24 }}
+          >
+            <i
+              className="bi bi-search text-muted mb-3"
+              style={{ fontSize: 46 }}
+            ></i>
+            <h5 className="fw-bold">No profiles found</h5>
+            <p className="text-muted mb-0">
+              Try searching with another name, email, or location.
+            </p>
+          </div>
+        )}
+
+        {searched && !loading && users.length > 0 && (
+          <>
+            <p className="text-muted mb-3">
+              Showing {users.length} result{users.length > 1 ? "s" : ""}
+            </p>
+
+            <div className="row">
+              {users.map((user) => (
+                <div className="col-md-6 col-lg-4 mb-4" key={user._id}>
+                  <div
+                    className="card border-0 shadow-sm h-100 overflow-hidden"
+                    style={{
+                      borderRadius: 24,
+                      cursor: "pointer",
+                      transition: "0.25s ease",
+                    }}
+                    onClick={() =>
+                      navigate("/profile", {
+                        state: {
+                          viewOnly: true,
+                          profileUserId: user._id,
+                        },
+                      })
+                    }
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-6px)";
+                      e.currentTarget.style.boxShadow =
+                        "0 16px 40px rgba(0,0,0,0.12)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow =
+                        "0 0.125rem 0.25rem rgba(0,0,0,.075)";
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: 80,
+                        background: "linear-gradient(135deg, #0d6efd, #6f42c1)",
+                      }}
+                    ></div>
+
+                    <div className="p-4 text-center position-relative">
+                      <img
+                        src={getImage(user.profilePic)}
+                        alt={user.name}
+                        className="rounded-circle border border-4 border-white shadow-sm"
+                        style={{
+                          width: 92,
+                          height: 92,
+                          objectFit: "cover",
+                          marginTop: -72,
+                          background: "#fff",
+                        }}
+                      />
+
+                      <h5 className="fw-bold mt-3 mb-1">{user.name}</h5>
+
+                      <p className="text-primary small fw-semibold mb-1">
+                        {user.role || "Professional"}
+                      </p>
+
+                      <p className="text-muted small mb-3">
+                        <i className="bi bi-geo-alt me-1"></i>
+                        {user.location || "Location not added"}
+                      </p>
+
+                      <p
+                        className="text-muted small mb-4"
+                        style={{ minHeight: 40 }}
+                      >
+                        {user.bio
+                          ? user.bio.slice(0, 90) + "..."
+                          : "No bio added yet."}
+                      </p>
+
+                      {renderButton(user)}
+=======
                   <div className="profile-body">
                     <div className="avatar-wrap">
                       <img src={getProfilePic(user)} alt="" className="profile-avatar" />
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
                     </div>
 
                     <h5 className="profile-name">{user.name}</h5>

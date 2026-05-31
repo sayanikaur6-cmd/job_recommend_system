@@ -201,3 +201,42 @@ exports.searchJobs = async (req, res) => {
     });
   }
 };
+exports.applyJob = async (req, res) => {
+  try {
+    const userId = getUserId(req);
+    const { jobId } = req.body;
+
+    const job = await Job.findOne({
+      $or: [{ _id: jobId }, { job_id: jobId }],
+    });
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found",
+      });
+    }
+
+    const application = await Application.findOneAndUpdate(
+      { user: userId, job: job._id },
+      {
+        user: userId,
+        job: job._id,
+        status: "applied",
+        appliedAt: new Date(),
+      },
+      { upsert: true, new: true }
+    ).populate("job");
+
+    res.json({
+      success: true,
+      message: "Application tracked successfully",
+      application,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

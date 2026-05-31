@@ -10,7 +10,10 @@ import PreferredLanguage from "../components/profile/PreferredLanguage";
 import Bio from "../components/profile/Bio";
 import { getConnectedPeople } from "../api/connectionApi";
 import { getEducations } from "../api/educationApi";
+<<<<<<< HEAD
+=======
 import { getMyPosts, deletePost, updatePost } from "../api/postApi";
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -27,6 +30,15 @@ const Profile = () => {
   const viewOnly = location.state?.viewOnly === true;
   const profileUserId = location.state?.profileUserId;
 
+<<<<<<< HEAD
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const viewOnly = location.state?.viewOnly === true;
+  const profileUserId = location.state?.profileUserId;
+
+=======
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
   const [languages, setLanguages] = useState([]);
   const [editedUser, setEditedUser] = useState({
     name: "",
@@ -122,7 +134,15 @@ const Profile = () => {
             facebook: profileData.facebook || "",
           });
 
+<<<<<<< HEAD
+          setSkills(
+            profileData.skills ||
+              data.skills ||
+              []
+          );
+=======
           setSkills(profileData.skills || data.skills || []);
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
           setExperience(
             profileData.experience ||
@@ -140,7 +160,15 @@ const Profile = () => {
               []
           );
 
+<<<<<<< HEAD
+          setLanguages(
+            profileData.languages ||
+              data.languages ||
+              []
+          );
+=======
           setLanguages(profileData.languages || data.languages || []);
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
         }
       } catch (error) {
         console.log("Profile fetch error:", error);
@@ -165,6 +193,8 @@ const Profile = () => {
     fetchEducation();
   }, [viewOnly]);
 
+<<<<<<< HEAD
+=======
   useEffect(() => {
     const loadConnectedPeople = async () => {
       try {
@@ -219,6 +249,7 @@ const Profile = () => {
     }
   };
 
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
   if (!user) {
     return (
       <div className="text-center mt-5">
@@ -226,6 +257,8 @@ const Profile = () => {
       </div>
     );
   }
+<<<<<<< HEAD
+=======
 
   const openConnectedProfile = (userId) => {
     if (!userId) return;
@@ -237,6 +270,7 @@ const Profile = () => {
       },
     });
   };
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
   const handleImageChange = async (e) => {
     if (viewOnly) return;
@@ -258,6 +292,18 @@ const Profile = () => {
     formData.append("profilePhoto", file);
 
     try {
+<<<<<<< HEAD
+      const res = await fetch(
+        "http://localhost:5000/api/users/profile-picture",
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+=======
       const res = await fetch("http://localhost:5000/api/users/profile-picture", {
         method: "PUT",
         headers: {
@@ -265,6 +311,7 @@ const Profile = () => {
         },
         body: formData,
       });
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
       const data = await res.json();
 
@@ -338,6 +385,9 @@ const Profile = () => {
         : `http://localhost:5000${user.profilePic}`;
     }
 
+<<<<<<< HEAD
+    return "https://via.placeholder.com/150";
+=======
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(
       user.name || "User"
     )}&background=6366f1&color=fff`;
@@ -353,6 +403,7 @@ const Profile = () => {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(
       person?.name || "User"
     )}&background=0d6efd&color=fff`;
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
   };
 
   const getResumeLink = () => {
@@ -379,6 +430,8 @@ const Profile = () => {
     return skill;
   };
 
+<<<<<<< HEAD
+=======
   const MyFeedSection = () => (
     <div
       className="card border-0 p-4 mb-4 shadow-sm"
@@ -594,6 +647,7 @@ const Profile = () => {
     </div>
   );
 
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
   return (
     <div
       style={{
@@ -680,7 +734,13 @@ const Profile = () => {
               </div>
 
               {viewOnly ? (
+<<<<<<< HEAD
+                <h3 className="fw-bold fs-4">
+                  {user.name || "No name added"}
+                </h3>
+=======
                 <h3 className="fw-bold fs-4">{user.name || "No name added"}</h3>
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
               ) : (
                 <EditableField
                   value={user.name}
@@ -734,8 +794,11 @@ const Profile = () => {
               )}
             </div>
 
+<<<<<<< HEAD
+=======
             <ConnectedPeopleCard />
 
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
             {!viewOnly ? (
               <>
                 <PersonalDetails
@@ -867,6 +930,35 @@ const Profile = () => {
           <div className="col-md-8">
             {!viewOnly ? (
               <>
+<<<<<<< HEAD
+                <Skills
+                  skills={skills}
+                  setSkills={setSkills}
+                  newSkill={newSkill}
+                  setNewSkill={setNewSkill}
+                  theme={theme}
+                  availableSkills={availableSkills}
+                  viewOnly={viewOnly}
+                />
+
+                <Education
+                  education={education}
+                  setEducation={setEducation}
+                  newEdu={newEdu}
+                  setNewEdu={setNewEdu}
+                  theme={theme}
+                  viewOnly={viewOnly}
+                />
+
+                <Experience
+                  experience={experience}
+                  setExperience={setExperience}
+                  theme={theme}
+                  user={user}
+                  viewOnly={viewOnly}
+                />
+
+=======
                 {showMyFeed && <MyFeedSection />}
 
                 <Skills
@@ -896,6 +988,7 @@ const Profile = () => {
                   viewOnly={viewOnly}
                 />
 
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
                 <Resume
                   user={user}
                   theme={theme}
@@ -1015,7 +1108,13 @@ const Profile = () => {
                         </h6>
 
                         <p className="text-muted mb-1">
+<<<<<<< HEAD
+                          {exp.company_name ||
+                            exp.company ||
+                            "Company not added"}
+=======
                           {exp.company_name || exp.company || "Company not added"}
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
                         </p>
 
                         <small className="text-muted d-block mb-1">
@@ -1027,7 +1126,12 @@ const Profile = () => {
                           {exp.start_date
                             ? formatDate(exp.start_date)
                             : "Start date not added"}{" "}
+<<<<<<< HEAD
+                          -{" "}
+                          {exp.end_date ? formatDate(exp.end_date) : "Present"}
+=======
                           - {exp.end_date ? formatDate(exp.end_date) : "Present"}
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
                         </small>
 
                         {exp.description && (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getRecommendedJobs } from "../api/recommendationApi";
+import { saveJob, applyJob } from "../api/jobActivityApi";
 
 const RecommendedJobs = () => {
   const [jobs, setJobs] = useState([]);
@@ -20,6 +21,31 @@ const RecommendedJobs = () => {
       setLoading(false);
     }
   };
+  const handleDetailsClick = () => {
+    navigate("/job-details", { state: { job } }); // 🔥 go to details page
+  };
+  const handleSave = async (job) => {
+      try {
+        await saveJob(job.job_id);
+        alert("Job saved");
+      } catch (error) {
+        alert(error.response?.data?.message || "Save failed");
+      }
+    };
+   const handleApply = async (job) => {
+      try {
+        await applyJob(job._id || job.job_id);
+  
+        if (job.apply_link || job.applyLink) {
+          window.open(job.apply_link || job.applyLink, "_blank");
+        }
+        // navigate("/application-tracking");
+  
+        alert("Application added to tracking");
+      } catch (error) {
+        alert(error.response?.data?.message || "Apply tracking failed");
+      }
+    };
 
   useEffect(() => {
     loadRecommendedJobs();
@@ -137,6 +163,27 @@ const RecommendedJobs = () => {
                     ))}
                   </div>
                 )}
+                
+                <button
+                  onClick={() => handleApply(job)}
+                  className="btn btn-sm rounded-pill px-3 me-2"
+                  style={{
+                    background: "#4f46e5",
+                    color: "#fff",
+                  }}
+                >
+                  Apply
+                </button>
+                <button
+                  onClick={() => handleSave(job)}
+                  className="btn btn-sm rounded-pill px-3"
+                  style={{
+                    background: "#e0e7ff",
+                    color: "#4f46e5",
+                  }}
+                >
+                  Save
+                </button>
 
                 {job.apply_link && (
                   <a

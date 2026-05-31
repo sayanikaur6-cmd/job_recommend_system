@@ -35,78 +35,8 @@ exports.sendConnectionRequest = async (req, res) => {
     const sender = await User.findById(senderId);
     const receiver = await User.findById(receiverId);
 
-    if (!sender || !receiver) {
-      return res.status(404).json({
-        success: false,
-        message: "Sender or receiver user not found",
-      });
-    }
-
-    let connection = await Connection.findOne({
-      $or: [
-        { sender: senderId, receiver: receiverId },
-        { sender: receiverId, receiver: senderId },
-      ],
-    });
-
-    if (connection) {
-      console.log("EXISTING CONNECTION:", connection);
-
-      if (connection.status === "pending") {
-        return res.status(400).json({
-          success: false,
-          message: "Connection request already pending",
-          connection,
-        });
-      }
-
-      if (connection.status === "accepted") {
-        return res.status(400).json({
-          success: false,
-          message: "Already connected",
-          connection,
-        });
-      }
-
-      if (connection.status === "rejected") {
-        const rejectedAt = connection.rejectedAt
-          ? new Date(connection.rejectedAt)
-          : new Date(connection.updatedAt);
-
-        const now = new Date();
-
-        if (now - rejectedAt < TEN_DAYS) {
-          const remainingDays = Math.ceil(
-            (TEN_DAYS - (now - rejectedAt)) / (24 * 60 * 60 * 1000)
-          );
-
-          return res.status(403).json({
-            success: false,
-            message: `Request was rejected. Try again after ${remainingDays} days.`,
-            connection,
-          });
-        }
-
-        connection.sender = senderId;
-        connection.receiver = receiverId;
-        connection.status = "pending";
-        connection.rejectedAt = null;
-        await connection.save();
-      }
-    } else {
-      connection = await Connection.create({
-        sender: senderId,
-        receiver: receiverId,
-        status: "pending",
-      });
-    }
-
-    try {
-      if (receiver.email) {
-        await sendConnectionRequestEmail(receiver, sender);
-      }
-    } catch (mailError) {
-      console.log("CONNECTION MAIL ERROR:", mailError.message);
+    if (sender && receiver) {
+      await sendConnectionRequestEmail(receiver, sender);
     }
 
     res.status(201).json({

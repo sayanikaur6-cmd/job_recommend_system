@@ -19,7 +19,11 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
 
       {/* RIGHT SIDE */}
       <div className="d-flex align-items-center gap-3">
+<<<<<<< HEAD
+        {/* 🔍 Search Component */}
+=======
         {/* SEARCH */}
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
         <AnimatedSearch />
 
         {!isLoggedIn ? (
@@ -66,6 +70,44 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
               Feed
             </button>
 
+<<<<<<< HEAD
+            
+            <div className="dropdown">
+              <i
+                className="bi bi-person-circle dropdown-toggle"
+                style={{ fontSize: "26px", cursor: "pointer" }}
+                data-bs-toggle="dropdown"
+              ></i>
+
+              <ul className="dropdown-menu dropdown-menu-end shadow border-0 rounded-4">
+                <li>
+                  <button className="dropdown-item" onClick={() => navigate("/profile")}>
+                    <i className="bi bi-person me-2"></i>
+                    View Profile
+                  </button>
+                </li>
+
+                <li>
+                  <button className="dropdown-item" onClick={() => navigate("/saved-jobs")}>
+                    <i className="bi bi-bookmark-heart me-2"></i>
+                    Saved Jobs
+                  </button>
+                </li>
+
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/application-tracking")}
+                  >
+                    <i className="bi bi-clipboard-check me-2"></i>
+                    Application Tracking
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* 🚪 LOGOUT */}
+=======
             {/* PROFILE */}
             <i
               className="bi bi-person-circle"
@@ -78,6 +120,7 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
             ></i>
 
             {/* LOGOUT */}
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
             <button className="btn btn-danger btn-sm" onClick={handleLogout}>
               Logout
             </button>
