@@ -2,6 +2,7 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { sendEmail } = require("../utils/emailService");
+const { sendOtpEmail } = require("../services/notificationService");
 // ===========================
 // LOGIN USER
 // ===========================
@@ -31,12 +32,12 @@ exports.loginUser = async (req, res) => {
       {
         id: user._id,
         user_id: user.user_id,
-        role: user.role
+        role: user.role,
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: process.env.JWT_EXPIRES_IN || "1d"
-      }
+        expiresIn: process.env.JWT_EXPIRES_IN || "1d",
+      },
     );
 
     // 🔹 5. Send response
@@ -47,15 +48,14 @@ exports.loginUser = async (req, res) => {
         user_id: user.user_id,
         name: user.name,
         email: user.email,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({
       message: "Login error",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -73,15 +73,14 @@ exports.forgotPassword = async (req, res) => {
     user.otp = otp;
     user.otp_expiry = Date.now() + 5 * 60 * 1000; // 5 min
     await user.save();
-
+    await sendOtpEmail(user.email, otp);
     await sendEmail({
       to: email,
       subject: "OTP for Password Reset",
-      html: `<h2>Your OTP is: ${otp}</h2>`
+      html: `<h2>Your OTP is: ${otp}</h2>`,
     });
 
     res.json({ message: "OTP sent" });
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -101,7 +100,6 @@ exports.verifyOTP = async (req, res) => {
     }
 
     res.json({ message: "OTP verified" });
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -125,7 +123,6 @@ exports.resetPassword = async (req, res) => {
     await user.save();
 
     res.json({ message: "Password reset successful" });
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -137,7 +134,7 @@ exports.googleCallback = async (req, res) => {
     // 🔥 login history save
     user.login_history.push({
       ip: req.ip,
-      device: req.headers["user-agent"]
+      device: req.headers["user-agent"],
     });
 
     await user.save();
@@ -147,15 +144,14 @@ exports.googleCallback = async (req, res) => {
       {
         id: user._id,
         user_id: user.user_id,
-        role: user.role
+        role: user.role,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "1d" },
     );
 
     // ✅ Redirect with token
     res.redirect(`${process.env.FRONTEND_URL}/?token=${token}`);
-
   } catch (error) {
     console.error("Google Login Error:", error);
     res.redirect(`${process.env.FRONTEND_URL}/login`);

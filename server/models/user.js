@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const User = require("../models/User");
 const userSchema = new mongoose.Schema(
   {
     user_id: {
@@ -35,6 +35,21 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    jobAlertEmailCount: {
+      type: Number,
+      default: 0,
+    },
+
+    jobAlertEmailDate: {
+      type: Date,
+      default: null,
+    },
+
+    lastJobAlertSentAt: {
+      type: Date,
+      default: null,
+    },
+    
     role: {
       type: String,
       enum: ["user", "admin"],
@@ -126,4 +141,4 @@ const userSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.models.User || mongoose.model("User", userSchema);

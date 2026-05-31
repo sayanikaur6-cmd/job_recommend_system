@@ -1,85 +1,50 @@
 const User = require("../models/user");
 const Education = require("../models/Education");
 const Experience = require("../models/Experience");
-const Connection = require("../models/Connection");
 
-const getConnectionStatus = async (myId, otherUserId) => {
-  if (myId.toString() === otherUserId.toString()) {
-    return "self";
-  }
-
-  const connection = await Connection.findOne({
-    $or: [
-      { sender: myId, receiver: otherUserId },
-      { sender: otherUserId, receiver: myId },
-    ],
-  });
-
-  if (!connection) return "none";
-
-  if (connection.status === "accepted") return "connected";
-
-  if (connection.status === "pending") {
-    if (connection.sender.toString() === myId.toString()) {
-      return "pending_sent";
-    } else {
-      return "pending_received";
-    }
-  }
-
-  return "none";
-};
-
-// search users
 exports.searchProfiles = async (req, res) => {
   try {
-    const myId = req.user.id;
-    const keyword = req.query.q || "";
+    const myId = req.user?.id || req.user?._id || req.user?.userId;
+    const q = (req.query.q || "").trim();
+
+    if (!q) {
+      return res.json({
+        success: true,
+        users: [],
+      });
+    }
 
     const users = await User.find({
+      _id: { $ne: myId },
       $or: [
-        { name: { $regex: keyword, $options: "i" } },
-        { email: { $regex: keyword, $options: "i" } },
-        { location: { $regex: keyword, $options: "i" } },
+        { name: { $regex: q, $options: "i" } },
+        { email: { $regex: q, $options: "i" } },
+        { role: { $regex: q, $options: "i" } },
+        { location: { $regex: q, $options: "i" } },
       ],
-    }).select("name email profilePic role location bio skills");
-
-    const result = await Promise.all(
-      users.map(async (user) => {
-        const status = await getConnectionStatus(myId, user._id);
-
-        return {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          profilePic: user.profilePic,
-          role: user.role,
-          location: user.location,
-          bio: user.bio,
-          skills: user.skills,
-          connectionStatus: status,
-        };
-      })
-    );
+    })
+      .select("_id name email profilePic role headline location bio skills")
+      .limit(10);
 
     res.json({
       success: true,
-      users: result,
+      users,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.log("PROFILE SEARCH ERROR:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
-// public profile details
 exports.getPublicProfile = async (req, res) => {
   try {
-    const myId = req.user.id;
-    const { userId } = req.params;
-
-    const user = await User.findById(userId)
-      .select("-password -password_hash -otp -otp_expiry")
-      .populate("skills");
+    const user = await User.findById(req.params.userId).select(
+      "-password -password_hash -otp -otp_expiry"
+    ).populate("skills");
 
     if (!user) {
       return res.status(404).json({
@@ -89,14 +54,12 @@ exports.getPublicProfile = async (req, res) => {
     }
 
     const education = await Education.find({
-      $or: [{ user_id: userId }, { userId: userId }],
-    }).sort({ createdAt: -1 });
+      $or: [{ user_id: req.params.userId }, { userId: req.params.userId }],
+    });
 
     const experience = await Experience.find({
-      $or: [{ user_id: userId }, { userId: userId }],
-    }).sort({ start_date: -1 });
-
-    const connectionStatus = await getConnectionStatus(myId, userId);
+      $or: [{ user_id: req.params.userId }, { userId: req.params.userId }],
+    });
 
     res.json({
       success: true,
@@ -104,10 +67,12 @@ exports.getPublicProfile = async (req, res) => {
         ...user.toObject(),
         education,
         experience,
-        connectionStatus,
       },
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
