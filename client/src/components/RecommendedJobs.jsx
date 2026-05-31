@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { getRecommendedJobs } from "../api/recommendationApi";
+<<<<<<< HEAD
 import { saveJob, applyJob } from "../api/jobActivityApi";
+=======
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
 const RecommendedJobs = () => {
   const [jobs, setJobs] = useState([]);
@@ -21,6 +24,7 @@ const RecommendedJobs = () => {
       setLoading(false);
     }
   };
+<<<<<<< HEAD
   const handleDetailsClick = () => {
     navigate("/job-details", { state: { job } }); // 🔥 go to details page
   };
@@ -46,6 +50,8 @@ const RecommendedJobs = () => {
         alert(error.response?.data?.message || "Apply tracking failed");
       }
     };
+=======
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
   useEffect(() => {
     loadRecommendedJobs();
@@ -163,6 +169,7 @@ const RecommendedJobs = () => {
                     ))}
                   </div>
                 )}
+<<<<<<< HEAD
                 
                 <button
                   onClick={() => handleApply(job)}
@@ -184,6 +191,19 @@ const RecommendedJobs = () => {
                 >
                   Save
                 </button>
+=======
+
+                {job.apply_link && (
+                  <a
+                    href={job.apply_link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-sm btn-primary rounded-pill px-3"
+                  >
+                    Apply Now
+                  </a>
+                )}
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
               </div>
             </div>
           ))}

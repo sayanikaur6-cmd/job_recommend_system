@@ -8,10 +8,21 @@ import Resume from "../components/profile/Resume";
 import PersonalDetails from "../components/profile/PersonalDetails";
 import PreferredLanguage from "../components/profile/PreferredLanguage";
 import Bio from "../components/profile/Bio";
+import { getConnectedPeople } from "../api/connectionApi";
 import { getEducations } from "../api/educationApi";
+<<<<<<< HEAD
+=======
+import { getMyPosts, deletePost, updatePost } from "../api/postApi";
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
 const Profile = () => {
   const [user, setUser] = useState(null);
+  const [connectedPeople, setConnectedPeople] = useState([]);
+
+  const [showMyFeed, setShowMyFeed] = useState(false);
+  const [myPosts, setMyPosts] = useState([]);
+  const [editingPostId, setEditingPostId] = useState(null);
+  const [editPostContent, setEditPostContent] = useState("");
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -19,6 +30,15 @@ const Profile = () => {
   const viewOnly = location.state?.viewOnly === true;
   const profileUserId = location.state?.profileUserId;
 
+<<<<<<< HEAD
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const viewOnly = location.state?.viewOnly === true;
+  const profileUserId = location.state?.profileUserId;
+
+=======
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
   const [languages, setLanguages] = useState([]);
   const [editedUser, setEditedUser] = useState({
     name: "",
@@ -67,6 +87,21 @@ const Profile = () => {
     border: "#e2e8f0",
   };
 
+  const loadMyPosts = async () => {
+    try {
+      const posts = await getMyPosts();
+      setMyPosts(posts || []);
+    } catch (error) {
+      console.log("My posts error:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!viewOnly) {
+      loadMyPosts();
+    }
+  }, [viewOnly]);
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -99,11 +134,15 @@ const Profile = () => {
             facebook: profileData.facebook || "",
           });
 
+<<<<<<< HEAD
           setSkills(
             profileData.skills ||
               data.skills ||
               []
           );
+=======
+          setSkills(profileData.skills || data.skills || []);
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
           setExperience(
             profileData.experience ||
@@ -121,11 +160,15 @@ const Profile = () => {
               []
           );
 
+<<<<<<< HEAD
           setLanguages(
             profileData.languages ||
               data.languages ||
               []
           );
+=======
+          setLanguages(profileData.languages || data.languages || []);
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
         }
       } catch (error) {
         console.log("Profile fetch error:", error);
@@ -150,6 +193,63 @@ const Profile = () => {
     fetchEducation();
   }, [viewOnly]);
 
+<<<<<<< HEAD
+=======
+  useEffect(() => {
+    const loadConnectedPeople = async () => {
+      try {
+        const people = await getConnectedPeople();
+        setConnectedPeople(people || []);
+      } catch (error) {
+        console.log("Connected people error:", error);
+      }
+    };
+
+    loadConnectedPeople();
+  }, []);
+
+  const handleDeletePost = async (postId) => {
+    try {
+      const confirmDelete = window.confirm("Are you sure you want to delete this post?");
+      if (!confirmDelete) return;
+
+      await deletePost(postId);
+      await loadMyPosts();
+    } catch (error) {
+      console.log("Delete post error:", error);
+    }
+  };
+
+  const startEditPost = (post) => {
+    setEditingPostId(post._id);
+    setEditPostContent(post.content || "");
+  };
+
+  const cancelEditPost = () => {
+    setEditingPostId(null);
+    setEditPostContent("");
+  };
+
+  const handleUpdatePost = async (postId) => {
+    try {
+      if (!editPostContent.trim()) {
+        alert("Post content cannot be empty");
+        return;
+      }
+
+      await updatePost(postId, {
+        content: editPostContent,
+      });
+
+      setEditingPostId(null);
+      setEditPostContent("");
+      await loadMyPosts();
+    } catch (error) {
+      console.log("Update post error:", error);
+    }
+  };
+
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
   if (!user) {
     return (
       <div className="text-center mt-5">
@@ -157,6 +257,20 @@ const Profile = () => {
       </div>
     );
   }
+<<<<<<< HEAD
+=======
+
+  const openConnectedProfile = (userId) => {
+    if (!userId) return;
+
+    navigate("/profile", {
+      state: {
+        viewOnly: true,
+        profileUserId: userId,
+      },
+    });
+  };
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
   const handleImageChange = async (e) => {
     if (viewOnly) return;
@@ -167,15 +281,18 @@ const Profile = () => {
     const token = localStorage.getItem("token");
 
     const reader = new FileReader();
+
     reader.onloadend = () => {
       setSelectedImage(reader.result);
     };
+
     reader.readAsDataURL(file);
 
     const formData = new FormData();
     formData.append("profilePhoto", file);
 
     try {
+<<<<<<< HEAD
       const res = await fetch(
         "http://localhost:5000/api/users/profile-picture",
         {
@@ -186,6 +303,15 @@ const Profile = () => {
           body: formData,
         }
       );
+=======
+      const res = await fetch("http://localhost:5000/api/users/profile-picture", {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
       const data = await res.json();
 
@@ -259,7 +385,25 @@ const Profile = () => {
         : `http://localhost:5000${user.profilePic}`;
     }
 
+<<<<<<< HEAD
     return "https://via.placeholder.com/150";
+=======
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      user.name || "User"
+    )}&background=6366f1&color=fff`;
+  };
+
+  const getPersonImage = (person) => {
+    if (person?.profilePic) {
+      return person.profilePic.startsWith("http")
+        ? person.profilePic
+        : `http://localhost:5000${person.profilePic}`;
+    }
+
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      person?.name || "User"
+    )}&background=0d6efd&color=fff`;
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
   };
 
   const getResumeLink = () => {
@@ -286,6 +430,224 @@ const Profile = () => {
     return skill;
   };
 
+<<<<<<< HEAD
+=======
+  const MyFeedSection = () => (
+    <div
+      className="card border-0 p-4 mb-4 shadow-sm"
+      style={{ borderRadius: "20px", background: theme.cardBg }}
+    >
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 className="fw-bold mb-1">My Feed</h5>
+          <small className="text-muted">Manage your own posts here</small>
+        </div>
+
+        <span
+          className="badge rounded-pill"
+          style={{
+            background: "#eef2ff",
+            color: theme.primaryPurple,
+            padding: "8px 12px",
+          }}
+        >
+          {myPosts.length} Posts
+        </span>
+      </div>
+
+      {myPosts.length === 0 ? (
+        <div className="text-center py-4">
+          <i
+            className="bi bi-file-post"
+            style={{
+              fontSize: "42px",
+              color: theme.textLight,
+            }}
+          ></i>
+
+          <p className="text-muted mb-0 mt-2">
+            You have not posted anything yet.
+          </p>
+        </div>
+      ) : (
+        <div className="d-flex flex-column gap-3">
+          {myPosts.map((post) => (
+            <div
+              key={post._id}
+              className="p-3 rounded-4"
+              style={{
+                background: "#f8fafc",
+                border: `1px solid ${theme.border}`,
+              }}
+            >
+              <div className="d-flex align-items-center gap-3 mb-3">
+                <img
+                  src={getProfileImage()}
+                  alt="Profile"
+                  width="45"
+                  height="45"
+                  className="rounded-circle"
+                  style={{ objectFit: "cover" }}
+                />
+
+                <div>
+                  <h6 className="fw-bold mb-0">{user.name}</h6>
+                  <small className="text-muted">
+                    {new Date(post.createdAt).toLocaleString()}
+                    {post.updatedAt &&
+                    new Date(post.updatedAt).getTime() !==
+                      new Date(post.createdAt).getTime()
+                      ? " • Edited"
+                      : ""}
+                  </small>
+                </div>
+              </div>
+
+              {editingPostId === post._id ? (
+                <>
+                  <textarea
+                    className="form-control mb-3"
+                    rows="4"
+                    value={editPostContent}
+                    onChange={(e) => setEditPostContent(e.target.value)}
+                    style={{
+                      borderRadius: "14px",
+                      border: `1px solid ${theme.border}`,
+                    }}
+                  />
+
+                  <div className="d-flex gap-2">
+                    <button
+                      className="btn btn-sm fw-bold"
+                      style={{
+                        background: theme.primaryPurple,
+                        color: "#fff",
+                        borderRadius: "10px",
+                      }}
+                      onClick={() => handleUpdatePost(post._id)}
+                    >
+                      Save Post
+                    </button>
+
+                    <button
+                      className="btn btn-sm btn-light fw-bold"
+                      style={{
+                        borderRadius: "10px",
+                        border: `1px solid ${theme.border}`,
+                      }}
+                      onClick={cancelEditPost}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="mb-3" style={{ whiteSpace: "pre-wrap" }}>
+                    {post.content}
+                  </p>
+
+                  <div
+                    className="d-flex justify-content-between align-items-center pt-3"
+                    style={{
+                      borderTop: `1px solid ${theme.border}`,
+                    }}
+                  >
+                    <small className="text-muted">
+                      ❤️ {post.likes?.length || 0} Likes &nbsp; • &nbsp; 💬{" "}
+                      {post.comments?.length || 0} Comments
+                    </small>
+
+                    <div className="d-flex gap-2">
+                      <button
+                        className="btn btn-sm btn-outline-primary fw-semibold"
+                        style={{ borderRadius: "10px" }}
+                        onClick={() => startEditPost(post)}
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        className="btn btn-sm btn-outline-danger fw-semibold"
+                        style={{ borderRadius: "10px" }}
+                        onClick={() => handleDeletePost(post._id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const ConnectedPeopleCard = () => (
+    <div
+      className="card border-0 p-4 mb-4 shadow-sm"
+      style={{ borderRadius: "20px", background: theme.cardBg }}
+    >
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h5 className="fw-bold mb-0">Connected People</h5>
+
+        <span
+          className="badge rounded-pill"
+          style={{
+            background: "#eef2ff",
+            color: theme.primaryPurple,
+            padding: "8px 12px",
+          }}
+        >
+          {connectedPeople.length}
+        </span>
+      </div>
+
+      {connectedPeople.length === 0 ? (
+        <p className="text-muted mb-0">No connected people yet.</p>
+      ) : (
+        <div className="d-flex flex-column gap-3">
+          {connectedPeople.map((person) => (
+            <div
+              key={person._id}
+              className="d-flex align-items-center gap-3 p-2 rounded-4"
+              style={{
+                background: "#f8fafc",
+                cursor: "pointer",
+                border: `1px solid ${theme.border}`,
+              }}
+              onClick={() => openConnectedProfile(person._id)}
+            >
+              <img
+                src={getPersonImage(person)}
+                alt=""
+                width="45"
+                height="45"
+                className="rounded-circle"
+                style={{ objectFit: "cover" }}
+              />
+
+              <div className="flex-grow-1">
+                <h6 className="fw-bold mb-0">{person.name}</h6>
+                <small className="text-muted">
+                  {person.role || person.location || person.email || "CareerSync user"}
+                </small>
+              </div>
+
+              <i
+                className="bi bi-chevron-right"
+                style={{ color: theme.textLight }}
+              ></i>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
   return (
     <div
       style={{
@@ -372,9 +734,13 @@ const Profile = () => {
               </div>
 
               {viewOnly ? (
+<<<<<<< HEAD
                 <h3 className="fw-bold fs-4">
                   {user.name || "No name added"}
                 </h3>
+=======
+                <h3 className="fw-bold fs-4">{user.name || "No name added"}</h3>
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
               ) : (
                 <EditableField
                   value={user.name}
@@ -411,8 +777,28 @@ const Profile = () => {
                   />
                 )}
               </div>
+
+              {!viewOnly && (
+                <button
+                  className="btn w-100 mt-3 fw-bold shadow-sm"
+                  style={{
+                    background: showMyFeed ? theme.primaryPurple : "#eef2ff",
+                    color: showMyFeed ? "#fff" : theme.primaryPurple,
+                    borderRadius: "12px",
+                  }}
+                  onClick={() => setShowMyFeed(!showMyFeed)}
+                >
+                  <i className="bi bi-collection me-2"></i>
+                  {showMyFeed ? "Hide My Feed" : "My Feed"}
+                </button>
+              )}
             </div>
 
+<<<<<<< HEAD
+=======
+            <ConnectedPeopleCard />
+
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
             {!viewOnly ? (
               <>
                 <PersonalDetails
@@ -544,6 +930,7 @@ const Profile = () => {
           <div className="col-md-8">
             {!viewOnly ? (
               <>
+<<<<<<< HEAD
                 <Skills
                   skills={skills}
                   setSkills={setSkills}
@@ -571,6 +958,37 @@ const Profile = () => {
                   viewOnly={viewOnly}
                 />
 
+=======
+                {showMyFeed && <MyFeedSection />}
+
+                <Skills
+                  skills={skills}
+                  setSkills={setSkills}
+                  newSkill={newSkill}
+                  setNewSkill={setNewSkill}
+                  theme={theme}
+                  availableSkills={availableSkills}
+                  viewOnly={viewOnly}
+                />
+
+                <Education
+                  education={education}
+                  setEducation={setEducation}
+                  newEdu={newEdu}
+                  setNewEdu={setNewEdu}
+                  theme={theme}
+                  viewOnly={viewOnly}
+                />
+
+                <Experience
+                  experience={experience}
+                  setExperience={setExperience}
+                  theme={theme}
+                  user={user}
+                  viewOnly={viewOnly}
+                />
+
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
                 <Resume
                   user={user}
                   theme={theme}
@@ -690,9 +1108,13 @@ const Profile = () => {
                         </h6>
 
                         <p className="text-muted mb-1">
+<<<<<<< HEAD
                           {exp.company_name ||
                             exp.company ||
                             "Company not added"}
+=======
+                          {exp.company_name || exp.company || "Company not added"}
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
                         </p>
 
                         <small className="text-muted d-block mb-1">
@@ -704,8 +1126,12 @@ const Profile = () => {
                           {exp.start_date
                             ? formatDate(exp.start_date)
                             : "Start date not added"}{" "}
+<<<<<<< HEAD
                           -{" "}
                           {exp.end_date ? formatDate(exp.end_date) : "Present"}
+=======
+                          - {exp.end_date ? formatDate(exp.end_date) : "Present"}
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
                         </small>
 
                         {exp.description && (

@@ -127,3 +127,19 @@ export const likeReply = async (
 
   return res.data.post;
 };
+
+export const getMyPosts = async () => {
+
+  const res = await axios.get(
+    `${API}/api/posts/my-posts`,
+    {
+      headers: {
+        Authorization:
+          `Bearer ${localStorage.getItem("token")}`
+      }
+    }
+  );
+
+  return res.data.posts;
+
+};

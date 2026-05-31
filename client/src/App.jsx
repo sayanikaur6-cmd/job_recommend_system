@@ -17,6 +17,10 @@ import PublicProfile from "./pages/PublicProfile";
 import SavedJobs from "./pages/SavedJobs";
 import ApplicationTracking from "./pages/ApplicationTracking";
 import Chat from "./pages/Chat";
+<<<<<<< HEAD
+=======
+import Connections from "./pages/Connections";
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 import Feed from "./pages/Feed";
 
 function App() {
@@ -53,6 +57,10 @@ function App() {
         <Route path="/saved-jobs" element={<SavedJobs />} />
         <Route path="/application-tracking" element={<ApplicationTracking />} />
         <Route path="/chat/:userId" element={<Chat />} />
+<<<<<<< HEAD
+=======
+        <Route path="/connections" element={<Connections />} />
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
         <Route path="/feed" element={<Feed />} />
       </Routes>
     </>

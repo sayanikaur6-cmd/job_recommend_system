@@ -1,11 +1,18 @@
 import axios from "axios";
 
-const API = axios.create({
-  baseURL: "http://localhost:5000/api"
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const authHeader = () => ({
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  },
 });
 
-export const getUserProfile = (id) =>
-  API.get(`/user/profile/${id}`);
+export const searchUsers = async (query) => {
+  const res = await axios.get(
+    `${API}/api/profile-search/search?q=${encodeURIComponent(query)}`,
+    authHeader()
+  );
 
-export const updateUserProfile = (id, data) =>
-  API.put(`/user/profile/${id}`, data);
+  return res.data.users || [];
+};

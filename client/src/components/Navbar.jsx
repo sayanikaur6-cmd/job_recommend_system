@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AnimatedSearch from "./AnimatedSearch";
 
 export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
@@ -19,7 +19,11 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
 
       {/* RIGHT SIDE */}
       <div className="d-flex align-items-center gap-3">
+<<<<<<< HEAD
         {/* 🔍 Search Component */}
+=======
+        {/* SEARCH */}
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
         <AnimatedSearch />
 
         {!isLoggedIn ? (
@@ -40,7 +44,7 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
           </>
         ) : (
           <>
-            {/* 👥 PEOPLE SEARCH */}
+            {/* PEOPLE */}
             <button
               className="btn btn-outline-dark d-flex align-items-center gap-2"
               onClick={() => navigate("/search-profiles")}
@@ -49,7 +53,15 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
               People
             </button>
 
-            {/* 🔔 CONNECTION REQUESTS */}
+            {/* CONNECTIONS */}
+            <Link to="/connections" style={{ textDecoration: "none" }}>
+              <button className="btn btn-outline-success d-flex align-items-center gap-2">
+                <i className="bi bi-person-check-fill"></i>
+                Connections
+              </button>
+            </Link>
+
+            {/* FEED */}
             <button
               className="btn btn-outline-primary d-flex align-items-center gap-2"
               onClick={() => navigate("/feed")}
@@ -58,6 +70,7 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
               Feed
             </button>
 
+<<<<<<< HEAD
             
             <div className="dropdown">
               <i
@@ -94,6 +107,20 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
             </div>
 
             {/* 🚪 LOGOUT */}
+=======
+            {/* PROFILE */}
+            <i
+              className="bi bi-person-circle"
+              style={{
+                fontSize: "26px",
+                cursor: "pointer",
+              }}
+              title="Profile"
+              onClick={() => navigate("/profile")}
+            ></i>
+
+            {/* LOGOUT */}
+>>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
             <button className="btn btn-danger btn-sm" onClick={handleLogout}>
               Logout
             </button>
