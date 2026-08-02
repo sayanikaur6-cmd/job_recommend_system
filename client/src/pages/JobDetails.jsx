@@ -1,10 +1,11 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-
+import Exactloc from "../components/Exactloc";
 export default function JobDetails() {
   const location = useLocation();
   const navigate = useNavigate();
   const job = location.state?.job;
+  console.log("Job details:", job);
 
   const [animate, setAnimate] = useState(false);
 
@@ -93,6 +94,14 @@ export default function JobDetails() {
                   <span className="badge bg-light text-dark px-3 py-2 rounded-pill">
                     🕒 {job.job_posted_at}
                   </span>
+                  <Exactloc
+                    company={job.employer_name}
+                    city={job.job_city}
+                    state={job.job_state}
+                    country={job.job_country}
+                    lat={job.job_latitude}
+                    lng={job.job_longitude}
+                  />
                 </div>
               </div>
             </div>

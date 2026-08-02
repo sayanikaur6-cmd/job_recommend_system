@@ -10,14 +10,13 @@ import PreferredLanguage from "../components/profile/PreferredLanguage";
 import Bio from "../components/profile/Bio";
 import { getConnectedPeople } from "../api/connectionApi";
 import { getEducations } from "../api/educationApi";
-<<<<<<< HEAD
-=======
 import { getMyPosts, deletePost, updatePost } from "../api/postApi";
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [connectedPeople, setConnectedPeople] = useState([]);
+  const [editPostImage, setEditPostImage] = useState(null);
+  const [editImagePreview, setEditImagePreview] = useState("");
 
   const [showMyFeed, setShowMyFeed] = useState(false);
   const [myPosts, setMyPosts] = useState([]);
@@ -29,16 +28,14 @@ const Profile = () => {
 
   const viewOnly = location.state?.viewOnly === true;
   const profileUserId = location.state?.profileUserId;
+  const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-<<<<<<< HEAD
-  const location = useLocation();
-  const navigate = useNavigate();
+  // const location = useLocation();
+  // const navigate = useNavigate();
 
-  const viewOnly = location.state?.viewOnly === true;
-  const profileUserId = location.state?.profileUserId;
+  // const viewOnly = location.state?.viewOnly === true;
+  // const profileUserId = location.state?.profileUserId;
 
-=======
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
   const [languages, setLanguages] = useState([]);
   const [editedUser, setEditedUser] = useState({
     name: "",
@@ -109,8 +106,8 @@ const Profile = () => {
 
         const url =
           viewOnly && profileUserId
-            ? `http://localhost:5000/api/profile-search/${profileUserId}`
-            : "http://localhost:5000/api/users/profile";
+            ? `${API}/api/profile-search/${profileUserId}`
+            : `${API}/api/users/profile`;
 
         const res = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },
@@ -134,41 +131,28 @@ const Profile = () => {
             facebook: profileData.facebook || "",
           });
 
-<<<<<<< HEAD
-          setSkills(
-            profileData.skills ||
-              data.skills ||
-              []
-          );
-=======
           setSkills(profileData.skills || data.skills || []);
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
           setExperience(
             profileData.experience ||
-              profileData.experiences ||
-              data.experience ||
-              data.experiences ||
-              []
+            profileData.experiences ||
+            data.experience ||
+            data.experiences ||
+            []
           );
 
-          setEducation(
-            profileData.education ||
-              profileData.educations ||
-              data.education ||
-              data.educations ||
-              []
-          );
+          // if(viewOnly && profileUserId) {
+          //   setEducation(
+          //     profileData.education ||
+          //       profileData.educations ||
+          //       data.education ||
+          //       data.educations ||
+          //       []
+          //   );
+          // }
 
-<<<<<<< HEAD
-          setLanguages(
-            profileData.languages ||
-              data.languages ||
-              []
-          );
-=======
+
           setLanguages(profileData.languages || data.languages || []);
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
         }
       } catch (error) {
         console.log("Profile fetch error:", error);
@@ -177,24 +161,24 @@ const Profile = () => {
 
     fetchProfile();
   }, [viewOnly, profileUserId]);
-
+  const edudata = [];
   useEffect(() => {
     const fetchEducation = async () => {
       try {
         if (viewOnly) return;
 
         const data = await getEducations();
-        setEducation(data || []);
+        setEducation(Array.isArray(data?.[0]) ? data[0] : data || []);
+        // edudata.push(data);
+        console.log("Fetched education data:", data);
       } catch (error) {
-        console.log(error);
+        console.log("Education fetch error:", error);
       }
     };
 
     fetchEducation();
   }, [viewOnly]);
 
-<<<<<<< HEAD
-=======
   useEffect(() => {
     const loadConnectedPeople = async () => {
       try {
@@ -223,11 +207,15 @@ const Profile = () => {
   const startEditPost = (post) => {
     setEditingPostId(post._id);
     setEditPostContent(post.content || "");
+    setEditImagePreview(post.image || "");
+    setEditPostImage(null);
   };
 
   const cancelEditPost = () => {
     setEditingPostId(null);
     setEditPostContent("");
+    setEditPostImage(null);
+    setEditImagePreview("");
   };
 
   const handleUpdatePost = async (postId) => {
@@ -237,19 +225,27 @@ const Profile = () => {
         return;
       }
 
-      await updatePost(postId, {
-        content: editPostContent,
-      });
+      const formData = new FormData();
+
+      formData.append("content", editPostContent);
+
+      if (editPostImage) {
+        formData.append("image", editPostImage);
+      }
+
+      await updatePost(postId, formData);
 
       setEditingPostId(null);
       setEditPostContent("");
+      setEditPostImage(null);
+      setEditImagePreview("");
+
       await loadMyPosts();
     } catch (error) {
       console.log("Update post error:", error);
     }
   };
 
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
   if (!user) {
     return (
       <div className="text-center mt-5">
@@ -257,8 +253,6 @@ const Profile = () => {
       </div>
     );
   }
-<<<<<<< HEAD
-=======
 
   const openConnectedProfile = (userId) => {
     if (!userId) return;
@@ -270,7 +264,6 @@ const Profile = () => {
       },
     });
   };
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
   const handleImageChange = async (e) => {
     if (viewOnly) return;
@@ -292,26 +285,13 @@ const Profile = () => {
     formData.append("profilePhoto", file);
 
     try {
-<<<<<<< HEAD
-      const res = await fetch(
-        "http://localhost:5000/api/users/profile-picture",
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
-=======
-      const res = await fetch("http://localhost:5000/api/users/profile-picture", {
+      const res = await fetch(`${API}/api/users/profile-picture`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
 
       const data = await res.json();
 
@@ -333,7 +313,7 @@ const Profile = () => {
 
     const token = localStorage.getItem("token");
 
-    const res = await fetch("http://localhost:5000/api/users/update-field", {
+    const res = await fetch(`${API}/api/users/update-field`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -358,7 +338,7 @@ const Profile = () => {
 
     const token = localStorage.getItem("token");
 
-    const res = await fetch("http://localhost:5000/api/users/update-field", {
+    const res = await fetch(`${API}/api/users/update-field`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -385,9 +365,6 @@ const Profile = () => {
         : `http://localhost:5000${user.profilePic}`;
     }
 
-<<<<<<< HEAD
-    return "https://via.placeholder.com/150";
-=======
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(
       user.name || "User"
     )}&background=6366f1&color=fff`;
@@ -403,7 +380,6 @@ const Profile = () => {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(
       person?.name || "User"
     )}&background=0d6efd&color=fff`;
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
   };
 
   const getResumeLink = () => {
@@ -430,8 +406,6 @@ const Profile = () => {
     return skill;
   };
 
-<<<<<<< HEAD
-=======
   const MyFeedSection = () => (
     <div
       className="card border-0 p-4 mb-4 shadow-sm"
@@ -495,7 +469,7 @@ const Profile = () => {
                   <small className="text-muted">
                     {new Date(post.createdAt).toLocaleString()}
                     {post.updatedAt &&
-                    new Date(post.updatedAt).getTime() !==
+                      new Date(post.updatedAt).getTime() !==
                       new Date(post.createdAt).getTime()
                       ? " • Edited"
                       : ""}
@@ -513,6 +487,42 @@ const Profile = () => {
                     style={{
                       borderRadius: "14px",
                       border: `1px solid ${theme.border}`,
+                    }}
+                  />
+
+                  {/* Current / Selected Image Preview */}
+                  {editImagePreview && (
+                    <div className="mb-3">
+                      <img
+                        src={
+                          editPostImage
+                            ? editImagePreview
+                            : `${API}${editImagePreview}`
+                        }
+                        alt="Post Preview"
+                        className="img-fluid rounded-4"
+                        style={{
+                          width: "100%",
+                          maxHeight: "350px",
+                          objectFit: "cover",
+                          border: `1px solid ${theme.border}`,
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Change Image */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="form-control mb-3"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+
+                      if (file) {
+                        setEditPostImage(file);
+                        setEditImagePreview(URL.createObjectURL(file));
+                      }
                     }}
                   />
 
@@ -546,6 +556,20 @@ const Profile = () => {
                   <p className="mb-3" style={{ whiteSpace: "pre-wrap" }}>
                     {post.content}
                   </p>
+                  {post.image && (
+                    <img
+                      src={`${API}${post.image}`}
+
+                      alt="Post"
+                      className="img-fluid rounded-4 mb-3"
+                      style={{
+                        maxHeight: "450px",
+                        width: "100%",
+                        objectFit: "cover",
+                        border: `1px solid ${theme.border}`,
+                      }}
+                    />
+                  )}
 
                   <div
                     className="d-flex justify-content-between align-items-center pt-3"
@@ -647,7 +671,6 @@ const Profile = () => {
     </div>
   );
 
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
   return (
     <div
       style={{
@@ -734,13 +757,7 @@ const Profile = () => {
               </div>
 
               {viewOnly ? (
-<<<<<<< HEAD
-                <h3 className="fw-bold fs-4">
-                  {user.name || "No name added"}
-                </h3>
-=======
                 <h3 className="fw-bold fs-4">{user.name || "No name added"}</h3>
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
               ) : (
                 <EditableField
                   value={user.name}
@@ -794,11 +811,8 @@ const Profile = () => {
               )}
             </div>
 
-<<<<<<< HEAD
-=======
             <ConnectedPeopleCard />
 
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
             {!viewOnly ? (
               <>
                 <PersonalDetails
@@ -930,35 +944,6 @@ const Profile = () => {
           <div className="col-md-8">
             {!viewOnly ? (
               <>
-<<<<<<< HEAD
-                <Skills
-                  skills={skills}
-                  setSkills={setSkills}
-                  newSkill={newSkill}
-                  setNewSkill={setNewSkill}
-                  theme={theme}
-                  availableSkills={availableSkills}
-                  viewOnly={viewOnly}
-                />
-
-                <Education
-                  education={education}
-                  setEducation={setEducation}
-                  newEdu={newEdu}
-                  setNewEdu={setNewEdu}
-                  theme={theme}
-                  viewOnly={viewOnly}
-                />
-
-                <Experience
-                  experience={experience}
-                  setExperience={setExperience}
-                  theme={theme}
-                  user={user}
-                  viewOnly={viewOnly}
-                />
-
-=======
                 {showMyFeed && <MyFeedSection />}
 
                 <Skills
@@ -988,7 +973,6 @@ const Profile = () => {
                   viewOnly={viewOnly}
                 />
 
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
                 <Resume
                   user={user}
                   theme={theme}
@@ -1036,9 +1020,8 @@ const Profile = () => {
                     education.map((edu, index) => (
                       <div
                         key={edu._id || index}
-                        className={`p-3 rounded-4 bg-light ${
-                          index !== education.length - 1 ? "mb-3" : ""
-                        }`}
+                        className={`p-3 rounded-4 bg-light ${index !== education.length - 1 ? "mb-3" : ""
+                          }`}
                         style={{
                           borderLeft: `4px solid ${theme.accentBlue}`,
                         }}
@@ -1096,9 +1079,8 @@ const Profile = () => {
                     experience.map((exp, index) => (
                       <div
                         key={exp._id || index}
-                        className={`p-3 rounded-4 bg-light ${
-                          index !== experience.length - 1 ? "mb-3" : ""
-                        }`}
+                        className={`p-3 rounded-4 bg-light ${index !== experience.length - 1 ? "mb-3" : ""
+                          }`}
                         style={{
                           borderLeft: `4px solid ${theme.primaryPurple}`,
                         }}
@@ -1108,13 +1090,7 @@ const Profile = () => {
                         </h6>
 
                         <p className="text-muted mb-1">
-<<<<<<< HEAD
-                          {exp.company_name ||
-                            exp.company ||
-                            "Company not added"}
-=======
                           {exp.company_name || exp.company || "Company not added"}
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
                         </p>
 
                         <small className="text-muted d-block mb-1">
@@ -1126,12 +1102,7 @@ const Profile = () => {
                           {exp.start_date
                             ? formatDate(exp.start_date)
                             : "Start date not added"}{" "}
-<<<<<<< HEAD
-                          -{" "}
-                          {exp.end_date ? formatDate(exp.end_date) : "Present"}
-=======
                           - {exp.end_date ? formatDate(exp.end_date) : "Present"}
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
                         </small>
 
                         {exp.description && (

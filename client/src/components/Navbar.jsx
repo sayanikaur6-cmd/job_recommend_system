@@ -19,11 +19,7 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
 
       {/* RIGHT SIDE */}
       <div className="d-flex align-items-center gap-3">
-<<<<<<< HEAD
-        {/* 🔍 Search Component */}
-=======
         {/* SEARCH */}
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
         <AnimatedSearch />
 
         {!isLoggedIn ? (
@@ -70,7 +66,6 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
               Feed
             </button>
 
-<<<<<<< HEAD
             
             <div className="dropdown">
               <i
@@ -107,20 +102,6 @@ export default function Navbar({ isLoggedIn, setIsLoggedIn }) {
             </div>
 
             {/* 🚪 LOGOUT */}
-=======
-            {/* PROFILE */}
-            <i
-              className="bi bi-person-circle"
-              style={{
-                fontSize: "26px",
-                cursor: "pointer",
-              }}
-              title="Profile"
-              onClick={() => navigate("/profile")}
-            ></i>
-
-            {/* LOGOUT */}
->>>>>>> d9d520b9774473c5e34b73bd5707b7b8f90cdf59
             <button className="btn btn-danger btn-sm" onClick={handleLogout}>
               Logout
             </button>

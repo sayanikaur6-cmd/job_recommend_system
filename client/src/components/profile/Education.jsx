@@ -14,6 +14,9 @@ const emptyEdu = {
 };
 
 const Education = ({ education = [], setEducation, theme }) => {
+  // console.log("Education component received education prop:", education);
+  console.log("education:", education);
+console.log("length:", education.length);
   const [formOpen, setFormOpen] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
   const [formData, setFormData] = useState(emptyEdu);

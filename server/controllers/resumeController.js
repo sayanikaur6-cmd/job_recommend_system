@@ -8,7 +8,10 @@ const {
   generateMinimalResume,
   generateBlackResume
 } = require("../utils/genResume");
- 
+
+
+
+
 // Education, Skills thakle import kor
 
 exports.generateResume = async (req, res) => {
@@ -58,3 +61,7 @@ exports.generateResume = async (req, res) => {
     res.status(500).json({ message: "Resume generate failed" });
   }
 };
+/**
+ * Upload and Parse Resume Action
+ * Calls SharpAPI, checks user language field, updates DB conditionally.
+ */
