@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { getRecommendedJobs } from "../api/recommendationApi";
 import { saveJob, applyJob } from "../api/jobActivityApi";
+import { useNavigate } from "react-router-dom";
+import Exactloc from "./Exactloc";
 
 const RecommendedJobs = () => {
   const [jobs, setJobs] = useState([]);
   const [userSkills, setUserSkills] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const navigate = useNavigate();
 
   const loadRecommendedJobs = async () => {
     try {
@@ -21,31 +25,33 @@ const RecommendedJobs = () => {
       setLoading(false);
     }
   };
-  const handleDetailsClick = () => {
-    navigate("/job-details", { state: { job } }); // 🔥 go to details page
+
+  const handleDetailsClick = (job) => {
+    navigate("/recom-job-details", { state: { job } });
   };
+
   const handleSave = async (job) => {
-      try {
-        await saveJob(job.job_id);
-        alert("Job saved");
-      } catch (error) {
-        alert(error.response?.data?.message || "Save failed");
+    try {
+      await saveJob(job.job_id);
+      alert("Job saved");
+    } catch (error) {
+      alert(error.response?.data?.message || "Save failed");
+    }
+  };
+
+  const handleApply = async (job) => {
+    try {
+      await applyJob(job._id || job.job_id);
+
+      if (job.apply_link || job.applyLink) {
+        window.open(job.apply_link || job.applyLink, "_blank");
       }
-    };
-   const handleApply = async (job) => {
-      try {
-        await applyJob(job._id || job.job_id);
-  
-        if (job.apply_link || job.applyLink) {
-          window.open(job.apply_link || job.applyLink, "_blank");
-        }
-        // navigate("/application-tracking");
-  
-        alert("Application added to tracking");
-      } catch (error) {
-        alert(error.response?.data?.message || "Apply tracking failed");
-      }
-    };
+
+      alert("Application added to tracking");
+    } catch (error) {
+      alert(error.response?.data?.message || "Apply tracking failed");
+    }
+  };
 
   useEffect(() => {
     loadRecommendedJobs();
@@ -62,6 +68,7 @@ const RecommendedJobs = () => {
   return (
     <div className="card border-0 shadow-sm p-4 rounded-4 mb-4">
       <h4 className="fw-bold mb-1">Recommended Jobs For You</h4>
+
       <p className="text-muted">
         Based on your profile skills and your searched jobs.
       </p>
@@ -102,6 +109,7 @@ const RecommendedJobs = () => {
                   background: "#fff",
                 }}
               >
+                {/* Top Section */}
                 <div className="d-flex gap-3">
                   <img
                     src={
@@ -115,7 +123,7 @@ const RecommendedJobs = () => {
                     style={{ objectFit: "cover" }}
                   />
 
-                  <div>
+                  <div className="flex-grow-1">
                     <h6 className="fw-bold mb-1">
                       {job.title || "Job Title"}
                     </h6>
@@ -128,11 +136,27 @@ const RecommendedJobs = () => {
                       <i className="bi bi-geo-alt me-1"></i>
                       {job.location || "Location not specified"}
                     </p>
+
+                    {/* View Location */}
+                    <div className="mb-2">
+                      <Exactloc
+                        company={job.company}
+                        city={job.city}
+                        state={job.state}
+                        country={job.country}
+                        lat={job.latitude}
+                        lng={job.longitude}
+                      />
+                    </div>
                   </div>
                 </div>
 
+                {/* Match Score */}
                 <div className="d-flex align-items-center gap-2 my-3">
-                  <div className="progress flex-grow-1" style={{ height: "8px" }}>
+                  <div
+                    className="progress flex-grow-1"
+                    style={{ height: "8px" }}
+                  >
                     <div
                       className="progress-bar"
                       style={{
@@ -147,6 +171,7 @@ const RecommendedJobs = () => {
                   </small>
                 </div>
 
+                {/* Matched Skills */}
                 {job.matchedSkills?.length > 0 && (
                   <div className="d-flex flex-wrap gap-2 mb-3">
                     {job.matchedSkills.map((skill, index) => (
@@ -163,7 +188,8 @@ const RecommendedJobs = () => {
                     ))}
                   </div>
                 )}
-                
+
+                {/* Buttons */}
                 <button
                   onClick={() => handleApply(job)}
                   className="btn btn-sm rounded-pill px-3 me-2"
@@ -174,6 +200,15 @@ const RecommendedJobs = () => {
                 >
                   Apply
                 </button>
+
+                <button
+                  onClick={() => handleDetailsClick(job)}
+                  className="btn btn-outline-dark btn-sm rounded-pill px-3 me-2"
+                  style={{ fontWeight: "600" }}
+                >
+                  Details
+                </button>
+
                 <button
                   onClick={() => handleSave(job)}
                   className="btn btn-sm rounded-pill px-3"
@@ -184,17 +219,6 @@ const RecommendedJobs = () => {
                 >
                   Save
                 </button>
-
-                {job.apply_link && (
-                  <a
-                    href={job.apply_link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn btn-sm btn-primary rounded-pill px-3"
-                  >
-                    Apply Now
-                  </a>
-                )}
               </div>
             </div>
           ))}

@@ -20,7 +20,7 @@ const experienceSchema = new mongoose.Schema(
     emp_type: {
       type: String,
       enum: ["Full-time", "Part-time", "Internship", "Freelance", "Contract"],
-      default: "",
+      default: "Full-time",
     },
     location: {
       type: String,

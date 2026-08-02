@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { handleGoogleRedirect } from "../utils/auth";
 import ChatbotWidget from "../components/ChatbotWidget";
 import RecommendedJobs from "../components/RecommendedJobs";
+import PremiumFooter from "../components/PremiumFooter";
 
 export default function Home() {
   const [jobs, setJobs] = useState([]);
@@ -620,7 +621,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="job-premium-section">
+      {/* <section className="job-premium-section">
         <div className="job-premium-container">
           <div className="section-heading">
             <div>
@@ -662,8 +663,9 @@ export default function Home() {
             </div>
           )}
         </div>
-      </section>
+      </section> */}
       <ChatbotWidget />
+      <PremiumFooter />
     </div>
   );
 }

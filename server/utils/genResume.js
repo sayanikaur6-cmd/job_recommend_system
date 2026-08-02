@@ -161,9 +161,9 @@ body {
 <div class="section-left">
   <div class="title-left">Language</div>
   <ul>
-    <li>English</li>
-    <li>France</li>
-    <li>Spain</li>
+    ${(user.languages || [])
+    .map((lang) => `<li>${lang}</li>`)
+    .join("")}
   </ul>
 </div>
 
@@ -514,9 +514,9 @@ const generateHTML = (user) => {
             <span class="icon">A☆</span> Language
             </h2>
             <ul>
-            <li>English</li>
-            <li>Bengali</li>
-            <li>Hindi</li>
+            ${(user.languages || [])
+          .map((lang) => `<li>${lang}</li>`)
+          .join("")}
             </ul>
         </div>
         </div>
@@ -899,9 +899,9 @@ body{
 
       <div class="pill-title">Language</div>
       <ul class="left-list">
-        <li>English</li>
-        <li>Germany (basic)</li>
-        <li>Spain (basic)</li>
+        ${(user.languages || [])
+        .map((lang) => `<li>${lang}</li>`)
+        .join("")}
       </ul>
 
       <div class="pill-title">Expertise</div>

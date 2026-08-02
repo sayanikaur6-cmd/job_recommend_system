@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { saveJob, applyJob } from "../api/jobActivityApi";
-
+import Exactloc from "./Exactloc";
 
 export default function JobCard({ job }) {
   const navigate = useNavigate();
@@ -132,6 +132,14 @@ export default function JobCard({ job }) {
           <p className="mb-2 text-muted">
             🕒 {job.job_posted_at}
           </p>
+          <Exactloc
+            company={job.employer_name}
+            city={job.job_city}
+            state={job.job_state}
+            country={job.job_country}
+            lat={job.job_latitude}
+            lng={job.job_longitude}
+        />
         </div>
 
         {/* Short Description */}

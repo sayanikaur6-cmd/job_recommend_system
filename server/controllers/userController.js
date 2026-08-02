@@ -2,8 +2,27 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const getNextSequence = require("../utils/getNextSequence"); // 👈 add this
 const { sendEmail } = require("../utils/emailService");
+const Skill = require("../models/Skill");
+const Experience = require("../models/Experience"); // Adjust path as needed
+const Education = require("../models/Education"); // Adjust path as needed
 const fs = require("fs");
 const path = require("path");
+const { parseResumeFile } = require("../services/resumeParserService");
+const parseToDate = (dateStr) => {
+  if (!dateStr || typeof dateStr !== "string") return null;
+  const cleaned = dateStr.trim().toLowerCase();
+  if (cleaned === "current" || cleaned === "present") return null;
+
+  const parsed = new Date(dateStr);
+  return isNaN(parsed.getTime()) ? null : parsed;
+};
+const getValueAtIndex = (val, index) => {
+  if (Array.isArray(val)) {
+    const item = val[index] !== undefined ? val[index] : val[0];
+    return item ? String(item) : "";
+  }
+  return val ? String(val) : "";
+};
 // ===========================
 // Create new user
 // ===========================
@@ -196,17 +215,17 @@ exports.updateProfile = async (req, res) => {
     if (req.files?.documents) {
       updateData.documents = req.files.documents[0].filename;
     }
-  if (req.files?.profilePhoto) {
-  updateData.profilePic = `/uploads/profile/${req.files.profilePhoto[0].filename}`;
-}
+    if (req.files?.profilePhoto) {
+      updateData.profilePic = `/uploads/profile/${req.files.profilePhoto[0].filename}`;
+    }
 
-if (req.files?.resume) {
-  updateData.resume = `/uploads/resume/${req.files.resume[0].filename}`;
-}
+    if (req.files?.resume) {
+      updateData.resume = `/uploads/resume/${req.files.resume[0].filename}`;
+    }
 
-if (req.files?.documents) {
-  updateData.documents = `/uploads/documents/${req.files.documents[0].filename}`;
-}
+    if (req.files?.documents) {
+      updateData.documents = `/uploads/documents/${req.files.documents[0].filename}`;
+    }
     const user = await User.findByIdAndUpdate(userId, updateData, {
       new: true,
     });
@@ -316,7 +335,7 @@ exports.addSkills = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-}; 
+};
 exports.removeSkills = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -338,28 +357,232 @@ exports.removeSkills = async (req, res) => {
 // 🔥 UPLOAD RESUME CONTROLLER
 exports.uploadResume = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.id || req.user._id;
 
-    // ❗ file না থাকলে error
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    // 🔥 file path
     const filePath = `/uploads/resume/${req.file.filename}`;
 
-    // 🔥 update DB
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { resume: filePath },
-      { returnDocument: "after" } // ✅ mongoose warning fix
-    );
+    // 1. Parser Call
+    const parsedResult = await parseResumeFile(req.file.path);
+    console.log("Parsed Resume Result:", parsedResult);
 
-    res.status(200).json(updatedUser);
+    const data = parsedResult?.data || parsedResult || {};
 
+    // ----------------------------------------------------
+    // 2. Map Basic User Profile Fields
+    // ----------------------------------------------------
+    const updateFields = {
+      resume: filePath,
+    };
+
+    if (data.candidate_name) updateFields.name = data.candidate_name;
+    if (data.phone) updateFields.phone = data.phone;
+    if (data.address || data.city) {
+      updateFields.location = data.address || data.city;
+    }
+    if (data.summary) updateFields.bio = data.summary;
+
+    if (data.job_title) {
+      updateFields.preferredRole = Array.isArray(data.job_title)
+        ? data.job_title
+        : [data.job_title];
+    } else if (data.professional_title) {
+      updateFields.preferredRole = [data.professional_title];
+    }
+
+    if (data.language) {
+      updateFields.languages = Array.isArray(data.language)
+        ? data.language
+        : [data.language];
+    }
+
+    // ----------------------------------------------------
+    // 3. Process Skills (Upsert & Collect ObjectIds)
+    // ----------------------------------------------------
+    let rawSkills = [];
+
+    if (Array.isArray(data.skill_name)) {
+      rawSkills.push(...data.skill_name);
+    } else if (typeof data.skill_name === "string") {
+      rawSkills.push(data.skill_name);
+    }
+
+    if (Array.isArray(data.skills)) {
+      rawSkills.push(...data.skills);
+    } else if (typeof data.skills === "string") {
+      const splitSkills = data.skills.split(/;|,|\n/).map((s) => s.trim());
+      rawSkills.push(...splitSkills);
+    }
+
+    const cleanSkills = [
+      ...new Set(
+        rawSkills
+          .map((s) => s?.trim())
+          .filter((s) => s && !s.toLowerCase().includes("lorem ipsum"))
+      ),
+    ];
+
+    const skillIds = [];
+    if (cleanSkills.length > 0) {
+      for (const skillName of cleanSkills) {
+        const skillDoc = await Skill.findOneAndUpdate(
+          { skill: skillName },
+          { skill: skillName },
+          { upsert: true, new: true, runValidators: true }
+        );
+        skillIds.push(skillDoc._id);
+      }
+      updateFields.skills = skillIds;
+    }
+
+    // ----------------------------------------------------
+    // 4. Process Experience Entries
+    // ----------------------------------------------------
+    const experiencesToInsert = [];
+
+    if (Array.isArray(data.employer)) {
+      data.employer.forEach((company, index) => {
+        experiencesToInsert.push({
+          user_id: userId,
+          company_name: String(company),
+          role: getValueAtIndex(data.job_title, index) || "Role",
+          start_date:
+            parseToDate(getValueAtIndex(data.employment_start_date, index)) ||
+            new Date(),
+          end_date: parseToDate(
+            getValueAtIndex(data.employment_end_date, index)
+          ),
+          description: getValueAtIndex(data.work_description, index),
+          location: getValueAtIndex(data["employer.city"], index),
+        });
+      });
+    } else if (data.employer) {
+      experiencesToInsert.push({
+        user_id: userId,
+        company_name: String(data.employer),
+        role:
+          getValueAtIndex(data.job_title, 0) ||
+          data.professional_title ||
+          "Role",
+        start_date: parseToDate(data.employment_start_date) || new Date(),
+        end_date: parseToDate(data.employment_end_date),
+        description:
+          getValueAtIndex(data.job_description, 0) || data.experience || "",
+        location: getValueAtIndex(data["employer.city"], 0),
+      });
+    } else if (data.experience && !data.experience.includes("Lorem Ipsum")) {
+      experiencesToInsert.push({
+        user_id: userId,
+        company_name: "Previous Experience",
+        role: data.professional_title || "Role",
+        start_date: parseToDate(data.employment_start_date) || new Date(),
+        end_date: parseToDate(data.employment_end_date),
+        description: String(data.experience),
+      });
+    }
+
+    // ----------------------------------------------------
+    // 5. Process Education Entries (FIXED FOR ARRAY CASTING ISSUE)
+    // ----------------------------------------------------
+    const educationsToInsert = [];
+
+    if (Array.isArray(data.degree) || Array.isArray(data.institution)) {
+      const degrees = Array.isArray(data.degree) ? data.degree : [data.degree];
+      const institutions = Array.isArray(data.institution)
+        ? data.institution
+        : [data.institution];
+
+      const count = Math.max(degrees.length, institutions.length);
+
+      for (let i = 0; i < count; i++) {
+        // Extract raw year field (can be array or string)
+        const rawYear =
+          data.education_period ||
+          data.graduation_year ||
+          data.expected_graduation_date ||
+          "";
+
+        // Extract raw location field
+        const rawLocation =
+          data["institution.city"] || data["institution.location"] || "";
+
+        // Extract raw description field
+        const rawDesc =
+          data.relevant_coursework || data.academic_project_description || "";
+
+        educationsToInsert.push({
+          userId: userId,
+          degree: getValueAtIndex(degrees, i) || "Degree",
+          institution: getValueAtIndex(institutions, i) || "Institution",
+          year: getValueAtIndex(rawYear, i),
+          location: getValueAtIndex(rawLocation, i),
+          description: getValueAtIndex(rawDesc, i),
+        });
+      }
+    } else if (data.degree || data.institution) {
+      const rawYear =
+        data.graduation_year ||
+        data.expected_graduation_date ||
+        data.education_period ||
+        "";
+
+      const rawLocation =
+        data["institution.city"] || data["institution.location"] || "";
+
+      const rawDesc =
+        data.relevant_coursework || data.academic_project_description || "";
+
+      educationsToInsert.push({
+        userId: userId,
+        degree: getValueAtIndex(data.degree, 0) || "Degree",
+        institution: getValueAtIndex(data.institution, 0) || "Institution",
+        year: getValueAtIndex(rawYear, 0),
+        location: getValueAtIndex(rawLocation, 0),
+        description: getValueAtIndex(rawDesc, 0),
+      });
+    }
+
+    // ----------------------------------------------------
+    // 6. DB Updates Execution
+    // ----------------------------------------------------
+    await Promise.all([
+      Experience.deleteMany({ user_id: userId }),
+      Education.deleteMany({ userId: userId }),
+    ]);
+
+    const [updatedUser] = await Promise.all([
+      User.findByIdAndUpdate(
+        userId,
+        { $set: updateFields },
+        { returnDocument: "after", runValidators: true }
+      ),
+      experiencesToInsert.length > 0
+        ? Experience.insertMany(experiencesToInsert)
+        : Promise.resolve(),
+      educationsToInsert.length > 0
+        ? Education.insertMany(educationsToInsert)
+        : Promise.resolve(),
+    ]);
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({
+      message: "Resume processed and profile updated successfully",
+      user: updatedUser,
+      insertedExperiences: experiencesToInsert.length,
+      insertedEducations: educationsToInsert.length,
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Upload failed" });
+    console.error("MongoDB Update Error details:", err);
+    return res.status(500).json({
+      message: "Upload failed",
+      error: err.message,
+    });
   }
 };
 exports.deleteResume = async (req, res) => {

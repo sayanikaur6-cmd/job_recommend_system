@@ -46,6 +46,7 @@ const calculateMatch = (userSkills = [], job = {}) => {
     const cleanSkill = normalize(skill);
 
     if (cleanSkill && jobText.includes(cleanSkill)) {
+      
       matchedSkills.push(skill);
     }
   });
