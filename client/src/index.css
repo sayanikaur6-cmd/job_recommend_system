@@ -148,3 +148,94 @@ body {
         font-size: 28px;
     }
 }
+/* Right Docked Vertical Floating Interview Bar */
+.floating-interview-bar {
+  position: fixed;
+  right: 0;
+  top: 45%;
+  transform: translateY(-50%);
+  z-index: 9999;
+  cursor: pointer;
+  background: linear-gradient(135deg, #6366f1 0%, #0ea5e9 100%);
+  color: #ffffff;
+  padding: 14px 16px;
+  border-radius: 20px 0 0 20px; /* বামপাশে রাউন্ডড, ডানপাশ স্ক্রিনের গায়ে 붙া */
+  box-shadow: -5px 10px 25px rgba(14, 165, 233, 0.4);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  user-select: none;
+  overflow: hidden;
+  max-width: 58px; /* নরমাল অবস্থায় শুধু আইকন দেখাবে */
+  white-space: nowrap;
+}
+
+.interview-bar-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.interview-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  min-width: 26px; /* আইকনটিকে ফিক্সড পজিশনে রাখার জন্য */
+}
+
+/* Pulse indicator dot */
+.live-pulse {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 9px;
+  height: 9px;
+  background-color: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+  animation: pulse-ring 1.8s infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+/* শুরুতে টেক্সট লুকানো থাকবে */
+.interview-bar-text {
+  font-weight: 800;
+  font-size: 15px;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  letter-spacing: 0.3px;
+}
+
+/* HOVER ANIMATION: মাউস আনলে স্লাইড হয়ে টেক্সট বের হবে */
+.floating-interview-bar:hover {
+  max-width: 220px; /* টেক্সট সহ পুরো বাটনটি খুলে যাবে */
+  padding-right: 20px;
+  box-shadow: -8px 15px 35px rgba(99, 102, 241, 0.55);
+  background: linear-gradient(135deg, #4f46e5 0%, #0284c7 100%);
+}
+
+.floating-interview-bar:hover .interview-bar-text {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.floating-interview-bar:active {
+  transform: translateY(-50%) scale(0.96);
+}

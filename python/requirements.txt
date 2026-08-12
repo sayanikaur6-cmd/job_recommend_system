@@ -1,5 +1,7 @@
 fastapi
 uvicorn
+ollama
+pydantic
 python-multipart
 pymupdf
 pdf2image

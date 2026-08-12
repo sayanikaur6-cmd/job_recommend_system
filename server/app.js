@@ -12,6 +12,8 @@ const chatbotRoutes = require("./routes/chatbotRoutes");
 const jobActivityRoutes = require("./routes/jobActivityRoutes");
 const recommendationRoutes = require("./routes/recommendationRoutes");
 const connectionRoutes = require("./routes/connectionRoutes");
+const contactRoutes = require("./routes/contactRoutes");
+
 
 app.use(cors());
 app.use(express.json());
@@ -46,6 +48,12 @@ app.use("/api/connections", require("./routes/connectionRoutes"));
 app.use("/api/job-activity", jobActivityRoutes);
 app.use("/api/connections", connectionRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+// CONTACT US
+app.use(
+  "/api/contact",
+  contactRoutes
+);
+
 app.use("/uploads", express.static("uploads"));
 app.get("/get-state", async (req, res) => {
   const { lat, lng } = req.query;

@@ -15,6 +15,8 @@ import { getMyPosts, deletePost, updatePost } from "../api/postApi";
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [connectedPeople, setConnectedPeople] = useState([]);
+  const [editPostImage, setEditPostImage] = useState(null);
+  const [editImagePreview, setEditImagePreview] = useState("");
 
   const [showMyFeed, setShowMyFeed] = useState(false);
   const [myPosts, setMyPosts] = useState([]);
@@ -26,6 +28,13 @@ const Profile = () => {
 
   const viewOnly = location.state?.viewOnly === true;
   const profileUserId = location.state?.profileUserId;
+  const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+  // const location = useLocation();
+  // const navigate = useNavigate();
+
+  // const viewOnly = location.state?.viewOnly === true;
+  // const profileUserId = location.state?.profileUserId;
 
   const [languages, setLanguages] = useState([]);
   const [editedUser, setEditedUser] = useState({
@@ -97,8 +106,8 @@ const Profile = () => {
 
         const url =
           viewOnly && profileUserId
-            ? `http://localhost:5000/api/profile-search/${profileUserId}`
-            : "http://localhost:5000/api/users/profile";
+            ? `${API}/api/profile-search/${profileUserId}`
+            : `${API}/api/users/profile`;
 
         const res = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },
@@ -126,19 +135,22 @@ const Profile = () => {
 
           setExperience(
             profileData.experience ||
-              profileData.experiences ||
-              data.experience ||
-              data.experiences ||
-              []
+            profileData.experiences ||
+            data.experience ||
+            data.experiences ||
+            []
           );
 
-          setEducation(
-            profileData.education ||
-              profileData.educations ||
-              data.education ||
-              data.educations ||
-              []
-          );
+          // if(viewOnly && profileUserId) {
+          //   setEducation(
+          //     profileData.education ||
+          //       profileData.educations ||
+          //       data.education ||
+          //       data.educations ||
+          //       []
+          //   );
+          // }
+
 
           setLanguages(profileData.languages || data.languages || []);
         }
@@ -149,16 +161,18 @@ const Profile = () => {
 
     fetchProfile();
   }, [viewOnly, profileUserId]);
-
+  const edudata = [];
   useEffect(() => {
     const fetchEducation = async () => {
       try {
         if (viewOnly) return;
 
         const data = await getEducations();
-        setEducation(data || []);
+        setEducation(Array.isArray(data?.[0]) ? data[0] : data || []);
+        // edudata.push(data);
+        console.log("Fetched education data:", data);
       } catch (error) {
-        console.log(error);
+        console.log("Education fetch error:", error);
       }
     };
 
@@ -193,11 +207,15 @@ const Profile = () => {
   const startEditPost = (post) => {
     setEditingPostId(post._id);
     setEditPostContent(post.content || "");
+    setEditImagePreview(post.image || "");
+    setEditPostImage(null);
   };
 
   const cancelEditPost = () => {
     setEditingPostId(null);
     setEditPostContent("");
+    setEditPostImage(null);
+    setEditImagePreview("");
   };
 
   const handleUpdatePost = async (postId) => {
@@ -207,12 +225,21 @@ const Profile = () => {
         return;
       }
 
-      await updatePost(postId, {
-        content: editPostContent,
-      });
+      const formData = new FormData();
+
+      formData.append("content", editPostContent);
+
+      if (editPostImage) {
+        formData.append("image", editPostImage);
+      }
+
+      await updatePost(postId, formData);
 
       setEditingPostId(null);
       setEditPostContent("");
+      setEditPostImage(null);
+      setEditImagePreview("");
+
       await loadMyPosts();
     } catch (error) {
       console.log("Update post error:", error);
@@ -258,7 +285,7 @@ const Profile = () => {
     formData.append("profilePhoto", file);
 
     try {
-      const res = await fetch("http://localhost:5000/api/users/profile-picture", {
+      const res = await fetch(`${API}/api/users/profile-picture`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -286,7 +313,7 @@ const Profile = () => {
 
     const token = localStorage.getItem("token");
 
-    const res = await fetch("http://localhost:5000/api/users/update-field", {
+    const res = await fetch(`${API}/api/users/update-field`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -311,7 +338,7 @@ const Profile = () => {
 
     const token = localStorage.getItem("token");
 
-    const res = await fetch("http://localhost:5000/api/users/update-field", {
+    const res = await fetch(`${API}/api/users/update-field`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -442,7 +469,7 @@ const Profile = () => {
                   <small className="text-muted">
                     {new Date(post.createdAt).toLocaleString()}
                     {post.updatedAt &&
-                    new Date(post.updatedAt).getTime() !==
+                      new Date(post.updatedAt).getTime() !==
                       new Date(post.createdAt).getTime()
                       ? " • Edited"
                       : ""}
@@ -460,6 +487,42 @@ const Profile = () => {
                     style={{
                       borderRadius: "14px",
                       border: `1px solid ${theme.border}`,
+                    }}
+                  />
+
+                  {/* Current / Selected Image Preview */}
+                  {editImagePreview && (
+                    <div className="mb-3">
+                      <img
+                        src={
+                          editPostImage
+                            ? editImagePreview
+                            : `${API}${editImagePreview}`
+                        }
+                        alt="Post Preview"
+                        className="img-fluid rounded-4"
+                        style={{
+                          width: "100%",
+                          maxHeight: "350px",
+                          objectFit: "cover",
+                          border: `1px solid ${theme.border}`,
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Change Image */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="form-control mb-3"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+
+                      if (file) {
+                        setEditPostImage(file);
+                        setEditImagePreview(URL.createObjectURL(file));
+                      }
                     }}
                   />
 
@@ -493,6 +556,20 @@ const Profile = () => {
                   <p className="mb-3" style={{ whiteSpace: "pre-wrap" }}>
                     {post.content}
                   </p>
+                  {post.image && (
+                    <img
+                      src={`${API}${post.image}`}
+
+                      alt="Post"
+                      className="img-fluid rounded-4 mb-3"
+                      style={{
+                        maxHeight: "450px",
+                        width: "100%",
+                        objectFit: "cover",
+                        border: `1px solid ${theme.border}`,
+                      }}
+                    />
+                  )}
 
                   <div
                     className="d-flex justify-content-between align-items-center pt-3"
@@ -943,9 +1020,8 @@ const Profile = () => {
                     education.map((edu, index) => (
                       <div
                         key={edu._id || index}
-                        className={`p-3 rounded-4 bg-light ${
-                          index !== education.length - 1 ? "mb-3" : ""
-                        }`}
+                        className={`p-3 rounded-4 bg-light ${index !== education.length - 1 ? "mb-3" : ""
+                          }`}
                         style={{
                           borderLeft: `4px solid ${theme.accentBlue}`,
                         }}
@@ -1003,9 +1079,8 @@ const Profile = () => {
                     experience.map((exp, index) => (
                       <div
                         key={exp._id || index}
-                        className={`p-3 rounded-4 bg-light ${
-                          index !== experience.length - 1 ? "mb-3" : ""
-                        }`}
+                        className={`p-3 rounded-4 bg-light ${index !== experience.length - 1 ? "mb-3" : ""
+                          }`}
                         style={{
                           borderLeft: `4px solid ${theme.primaryPurple}`,
                         }}

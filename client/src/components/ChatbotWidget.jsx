@@ -1,46 +1,105 @@
-import { useState } from "react";
-import { sendChatMessage } from "../api/chatbotApi";
+import { useState, useEffect, useRef } from "react";
+
+const API_BASE_URL = "http://localhost:8000";
 
 const ChatbotWidget = () => {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
 
   const [chats, setChats] = useState([
     {
       sender: "bot",
-      text: "Hi! I am CareerSync AI. I can help with jobs, profile, resume, skills, recommendations and interviews.",
+      text: "Hi! I am CareerSync AI. Loading your personal career session...",
     },
   ]);
 
-  const handleSend = async () => {
-    if (!message.trim()) return;
+  const chatBodyRef = useRef(null);
 
-    const userText = message;
+  // Auto scroll to bottom on new message
+  useEffect(() => {
+    if (chatBodyRef.current) {
+      chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+    }
+  }, [chats, loading]);
 
-    setChats((prev) => [...prev, { sender: "user", text: userText }]);
-    setMessage("");
+  // Session initialize when widget opens
+  useEffect(() => {
+    if (open && !sessionId) {
+      initChatSession();
+    }
+  }, [open]);
 
+  const initChatSession = async () => {
     try {
       setLoading(true);
+      const res = await fetch(`${API_BASE_URL}/job-chat/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_name: "Candidate" }),
+      });
+      const data = await res.json();
 
-      const data = await sendChatMessage(userText);
-
-      setChats((prev) => [
-        ...prev,
+      if (res.ok) {
+        setSessionId(data.session_id);
+        setChats([
+          {
+            sender: "bot",
+            text: data.response || "Hi! I am CareerSync AI. How can I help you today?",
+          },
+        ]);
+      } else {
+        throw new Error(data.detail || "Failed to start chat session");
+      }
+    } catch (error) {
+      setChats([
         {
           sender: "bot",
-          text: data.reply,
+          text: "Hi! I am CareerSync AI. Could not connect to backend server.",
         },
       ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSend = async (userTextToSend) => {
+    const textToSend = userTextToSend || message;
+    if (!textToSend.trim() || loading) return;
+
+    setChats((prev) => [...prev, { sender: "user", text: textToSend }]);
+    setMessage("");
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/job-chat/message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionId,
+          message: textToSend,
+        }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setChats((prev) => [
+          ...prev,
+          {
+            sender: "bot",
+            text: data.response,
+          },
+        ]);
+      } else {
+        throw new Error(data.detail || "Error from server");
+      }
     } catch (error) {
       setChats((prev) => [
         ...prev,
         {
           sender: "bot",
-          text:
-            error.response?.data?.reply ||
-            "Sorry, I could not connect to chatbot server.",
+          text: error.message || "Sorry, I could not connect to chatbot server.",
         },
       ]);
     } finally {
@@ -65,6 +124,7 @@ const ChatbotWidget = () => {
           z-index: 9999;
           box-shadow: 0 20px 55px rgba(14,165,233,0.45);
           transition: 0.25s ease;
+          cursor: pointer;
         }
 
         .chat-float-btn:hover {
@@ -85,6 +145,8 @@ const ChatbotWidget = () => {
           border: 1px solid rgba(226,232,240,0.8);
           box-shadow: 0 30px 90px rgba(15,23,42,0.22);
           animation: slideChat 0.25s ease;
+          display: flex;
+          flex-direction: column;
         }
 
         @keyframes slideChat {
@@ -142,10 +204,11 @@ const ChatbotWidget = () => {
           width: 34px;
           height: 34px;
           border-radius: 50%;
+          cursor: pointer;
         }
 
         .chat-body {
-          height: 410px;
+          flex: 1;
           overflow-y: auto;
           padding: 18px;
           background:
@@ -169,6 +232,7 @@ const ChatbotWidget = () => {
           font-size: 14px;
           line-height: 1.55;
           box-shadow: 0 10px 30px rgba(15,23,42,0.08);
+          white-space: pre-line;
         }
 
         .chat-msg.bot .chat-bubble {
@@ -181,6 +245,33 @@ const ChatbotWidget = () => {
           background: linear-gradient(135deg, #6366f1, #0ea5e9);
           color: white;
           border-bottom-right-radius: 5px;
+        }
+
+        /* Thinking Animation */
+        .thinking-bubble {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 12px 16px;
+          font-style: italic;
+          color: #64748b;
+        }
+
+        .dot {
+          width: 6px;
+          height: 6px;
+          background: #6366f1;
+          border-radius: 50%;
+          animation: blink 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) { animation-delay: 0s; }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes blink {
+          0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+          40% { opacity: 1; transform: scale(1.2); }
         }
 
         .chat-input-area {
@@ -208,6 +299,12 @@ const ChatbotWidget = () => {
           color: white;
           background: linear-gradient(135deg, #6366f1, #0ea5e9);
           box-shadow: 0 12px 30px rgba(99,102,241,0.35);
+          cursor: pointer;
+        }
+
+        .chat-send-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
         }
 
         .quick-actions {
@@ -225,6 +322,7 @@ const ChatbotWidget = () => {
           padding: 7px 11px;
           font-size: 12px;
           font-weight: 700;
+          cursor: pointer;
         }
 
         @media (max-width: 520px) {
@@ -260,18 +358,18 @@ const ChatbotWidget = () => {
             </button>
           </div>
 
-          <div className="chat-body">
+          <div className="chat-body" ref={chatBodyRef}>
             <div className="quick-actions">
-              <button onClick={() => setMessage("Recommend jobs for me")}>
+              <button onClick={() => handleSend("Recommend jobs for me")}>
                 Recommend jobs
               </button>
-              <button onClick={() => setMessage("How to improve my resume?")}>
+              <button onClick={() => handleSend("How to improve my resume?")}>
                 Resume help
               </button>
-              <button onClick={() => setMessage("What skills should I learn?")}>
+              <button onClick={() => handleSend("What skills should I learn?")}>
                 Skill gap
               </button>
-              <button onClick={() => setMessage("Give interview tips")}>
+              <button onClick={() => handleSend("Give interview tips")}>
                 Interview tips
               </button>
             </div>
@@ -282,9 +380,15 @@ const ChatbotWidget = () => {
               </div>
             ))}
 
+            {/* Dynamic Thinking Indicator */}
             {loading && (
               <div className="chat-msg bot">
-                <div className="chat-bubble">Typing...</div>
+                <div className="chat-bubble thinking-bubble">
+                  <span>CareerSync AI is thinking</span>
+                  <div className="dot"></div>
+                  <div className="dot"></div>
+                  <div className="dot"></div>
+                </div>
               </div>
             )}
           </div>
@@ -294,13 +398,18 @@ const ChatbotWidget = () => {
               type="text"
               placeholder="Ask about jobs, resume, skills..."
               value={message}
+              disabled={loading}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSend();
               }}
             />
 
-            <button className="chat-send-btn" onClick={handleSend}>
+            <button
+              className="chat-send-btn"
+              onClick={() => handleSend()}
+              disabled={loading}
+            >
               <i className="bi bi-send-fill"></i>
             </button>
           </div>

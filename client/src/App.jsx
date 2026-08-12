@@ -18,8 +18,10 @@ import PublicProfile from "./pages/PublicProfile";
 import SavedJobs from "./pages/SavedJobs";
 import ApplicationTracking from "./pages/ApplicationTracking";
 import Chat from "./pages/Chat";
+import Interview from './pages/Interview';
 import Connections from "./pages/Connections";
 import Feed from "./pages/Feed";
+import ContactUs from './pages/ContactUs';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -56,8 +58,10 @@ function App() {
         <Route path="/saved-jobs" element={<SavedJobs />} />
         <Route path="/application-tracking" element={<ApplicationTracking />} />
         <Route path="/chat/:userId" element={<Chat />} />
+        <Route path="/interview" element={<Interview />} />
         <Route path="/connections" element={<Connections />} />
         <Route path="/feed" element={<Feed />} />
+        <Route path="/contact" element={<ContactUs />} />
       </Routes>
     </>
   );

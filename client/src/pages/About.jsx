@@ -1,4 +1,5 @@
 import React from "react";
+import PremiumFooter from "../components/PremiumFooter";
 
 const About = () => {
   const features = [
@@ -108,6 +109,7 @@ const About = () => {
           ))}
         </div>
       </section>
+      <PremiumFooter />
     </div>
   );
 };
