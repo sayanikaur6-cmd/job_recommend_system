@@ -6,9 +6,12 @@ import { handleGoogleRedirect } from "../utils/auth";
 import ChatbotWidget from "../components/ChatbotWidget";
 import RecommendedJobs from "../components/RecommendedJobs";
 import PremiumFooter from "../components/PremiumFooter";
+import { useNavigate } from "react-router-dom";
+// import { Sparkles, Video, ArrowRight } from "lucide-react"; // icons (optional)
 
 export default function Home() {
   const [jobs, setJobs] = useState([]);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [locationData, setLocationData] = useState(null);
   const [error, setError] = useState("");
@@ -36,7 +39,7 @@ export default function Home() {
 
           try {
             const response = await fetch(
-              `${import.meta.env.VITE_API_URL}/get-state?lat=${lat}&lng=${lng}`
+              `${import.meta.env.VITE_API_URL}/get-state?lat=${lat}&lng=${lng}`,
             );
 
             const data = await response.json();
@@ -50,14 +53,18 @@ export default function Home() {
         () => {
           setError("Location permission denied");
           setLoading(false);
-        }
+        },
       );
     } else {
       setError("Geolocation not supported");
       setLoading(false);
     }
   };
-
+//handleStartInterview
+const handleStartInterview = (role = "full-stack-developer") => {
+    // Dynamic URL Structure: /interview/full-stack-developer
+    navigate(`/interview`);
+  };
   return (
     <div className="premium-home">
       <style>{`
@@ -497,9 +504,7 @@ export default function Home() {
               </Link>
 
               <Link to="/about">
-                <button className="premium-btn-secondary">
-                  About Us
-                </button>
+                <button className="premium-btn-secondary">About Us</button>
               </Link>
             </div>
           </div>
@@ -512,7 +517,9 @@ export default function Home() {
 
             <div className="floating-card float-two">
               <strong>Live Recommendations</strong>
-              <div className="text-muted small">Based on your profile skills</div>
+              <div className="text-muted small">
+                Based on your profile skills
+              </div>
             </div>
 
             <div className="glass-dashboard">
@@ -665,6 +672,21 @@ export default function Home() {
         </div>
       </section> */}
       <ChatbotWidget />
+      {/* Vertical Edge Docked Interview Bar */}
+<div 
+  className="floating-interview-bar"
+  onClick={() => handleStartInterview('ai-mock-interview')}
+  role="button"
+  tabIndex={0}
+>
+  <div className="interview-bar-content">
+    <div className="interview-icon-wrapper">
+      <i className="bi bi-camera-video-fill"></i>
+      <span className="live-pulse"></span>
+    </div>
+    <span className="interview-bar-text">Start AI Interview</span>
+  </div>
+</div>
       <PremiumFooter />
     </div>
   );
