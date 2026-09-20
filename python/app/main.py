@@ -1,5 +1,7 @@
 from fastapi import FastAPI
+
 from fastapi.middleware.cors import CORSMiddleware
+
 
 from app.routes.resume_routes import (
     router as resume_router
@@ -9,32 +11,59 @@ from app.routes.chat_routes import (
     router as chat_router
 )
 
-from app.utils.database import (
-    chatbot_dataset
+from app.routes.job_chat_routes import (
+    router as job_chat_router
 )
+
 
 app = FastAPI(
     title="CareerSync API"
 )
 
+
 app.add_middleware(
+
     CORSMiddleware,
+
     allow_origins=["*"],
+
     allow_credentials=True,
+
     allow_methods=["*"],
-    allow_headers=["*"],
+
+    allow_headers=["*"]
 )
 
+
+# =========================
 # Resume Parser
+# =========================
+
 app.include_router(
+
     resume_router,
+
     prefix="/api/resume",
+
     tags=["Resume"]
 )
 
-# Chatbot
+
+# =========================
+# Existing Chatbot
+# =========================
+
 app.include_router(
     chat_router
+)
+
+
+# =========================
+# Job Recommendation Chatbot
+# =========================
+
+app.include_router(
+    job_chat_router
 )
 
 
@@ -42,22 +71,5 @@ app.include_router(
 async def home():
 
     return {
-        "message":
-        "CareerSync API Running"
-    }
-
-
-@app.get("/test")
-async def test():
-
-    total = await chatbot_dataset.count_documents(
-        {}
-    )
-
-    return {
-
-        "mongo": True,
-
-        "dataset": total
-
+        "message": "CareerSync API Running"
     }

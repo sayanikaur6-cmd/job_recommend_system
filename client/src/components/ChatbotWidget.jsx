@@ -1,12 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-
+import ReactMarkdown from "react-markdown";
 const API_BASE_URL = "http://localhost:8000";
+const VITE_API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const ChatbotWidget = () => {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState(null);
+
+  // Get currently logged-in CareerSync user
+  const [user, setUser] = useState(null);
 
   const [chats, setChats] = useState([
     {
@@ -16,47 +20,141 @@ const ChatbotWidget = () => {
   ]);
 
   const chatBodyRef = useRef(null);
+   const getToken = () => {
+    return localStorage.getItem("token");
+  };
 
-  // Auto scroll to bottom on new message
+  // -----------------------------------------
+  // LOAD LOGGED-IN USER
+  // -----------------------------------------
+  useEffect(() => {
+    // console.log("Fetching logged-in user profile...");
+    const fetchProfile = async () => {
+      try {
+        const token = getToken();
+
+        const url =`${VITE_API_URL}/api/users/profile`;
+
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error(
+            "Profile request failed:",
+            data
+          );
+          return;
+        }
+
+        const profileData =
+          data.profile ||
+          data.user ||
+          data;
+
+        setUser(profileData);
+      } catch (error) {
+        console.error(
+          "Profile fetch error:",
+          error
+        );
+      }
+    };
+
+    fetchProfile();
+  },[]);
+
+  // -----------------------------------------
+  // AUTO SCROLL
+  // -----------------------------------------
   useEffect(() => {
     if (chatBodyRef.current) {
-      chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+      chatBodyRef.current.scrollTop =
+        chatBodyRef.current.scrollHeight;
     }
   }, [chats, loading]);
 
-  // Session initialize when widget opens
+  // -----------------------------------------
+  // SESSION INITIALIZE
+  // -----------------------------------------
   useEffect(() => {
-    if (open && !sessionId) {
+    if (open && !sessionId && user?.user_id) {
       initChatSession();
     }
-  }, [open]);
+  }, [open, user, sessionId]);
 
+  // -----------------------------------------
+  // START CHAT SESSION
+  // -----------------------------------------
   const initChatSession = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE_URL}/job-chat/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_name: "Candidate" }),
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        setSessionId(data.session_id);
-        setChats([
-          {
-            sender: "bot",
-            text: data.response || "Hi! I am CareerSync AI. How can I help you today?",
-          },
-        ]);
-      } else {
-        throw new Error(data.detail || "Failed to start chat session");
-      }
-    } catch (error) {
+    if (!user?.user_id) {
       setChats([
         {
           sender: "bot",
-          text: "Hi! I am CareerSync AI. Could not connect to backend server.",
+          text: "Please login to CareerSync before using the AI Job Assistant.",
+        },
+      ]);
+
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      console.log("Starting chatbot session...");
+      console.log("User ID:", user.user_id);
+
+      const res = await fetch(`${API_BASE_URL}/job-chat/start`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: user.user_id,
+          user_name:
+            user.name ||
+            user.username ||
+            user.full_name ||
+            "Candidate",
+        }),
+      });
+
+      const data = await res.json();
+
+      console.log("START CHAT RESPONSE:", data);
+
+      if (res.ok) {
+        // Save session ID
+        setSessionId(data.session_id);
+
+        console.log("Chat Session ID:", data.session_id);
+
+        setChats([
+          {
+            sender: "bot",
+            text:
+              data.response ||
+              "Hi! I am CareerSync AI. How can I help you today?",
+          },
+        ]);
+      } else {
+        throw new Error(
+          data.detail || "Failed to start chat session"
+        );
+      }
+    } catch (error) {
+      console.error("Start chat error:", error);
+
+      setChats([
+        {
+          sender: "bot",
+          text:
+            error.message ||
+            "Hi! I am CareerSync AI. Could not connect to backend server.",
         },
       ]);
     } finally {
@@ -64,42 +162,101 @@ const ChatbotWidget = () => {
     }
   };
 
+  // -----------------------------------------
+  // SEND MESSAGE
+  // -----------------------------------------
   const handleSend = async (userTextToSend) => {
     const textToSend = userTextToSend || message;
-    if (!textToSend.trim() || loading) return;
 
-    setChats((prev) => [...prev, { sender: "user", text: textToSend }]);
+    if (!textToSend.trim() || loading) {
+      return;
+    }
+
+    // User must be logged in
+    // console.log("User_id: "+ user.user_id);
+    if (!user?.user_id) {
+      setChats((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: "Please login to CareerSync first.",
+        },
+      ]);
+
+      return;
+    }
+
+    // Session must exist
+    if (!sessionId) {
+      setChats((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: "Chat session is not ready yet. Please wait a moment.",
+        },
+      ]);
+
+      return;
+    }
+
+    setChats((prev) => [
+      ...prev,
+      {
+        sender: "user",
+        text: textToSend,
+      },
+    ]);
+
     setMessage("");
     setLoading(true);
 
     try {
+      console.log("Sending message...");
+      console.log("Session ID:", sessionId);
+      console.log("User ID:", user.user_id);
+      console.log("Message:", textToSend);
+
       const res = await fetch(`${API_BASE_URL}/job-chat/message`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           session_id: sessionId,
+          user_id: user.user_id,
           message: textToSend,
         }),
       });
+
       const data = await res.json();
+
+      console.log("MESSAGE RESPONSE:", data);
 
       if (res.ok) {
         setChats((prev) => [
           ...prev,
           {
             sender: "bot",
-            text: data.response,
+            text:
+              data.response ||
+              "Sorry, I could not generate a response.",
           },
         ]);
       } else {
-        throw new Error(data.detail || "Error from server");
+        throw new Error(
+          data.detail || "Error from server"
+        );
       }
     } catch (error) {
+      console.error("Send message error:", error);
+
       setChats((prev) => [
         ...prev,
         {
           sender: "bot",
-          text: error.message || "Sorry, I could not connect to chatbot server.",
+          text:
+            error.message ||
+            "Sorry, I could not connect to chatbot server.",
         },
       ]);
     } finally {
@@ -154,6 +311,7 @@ const ChatbotWidget = () => {
             opacity: 0;
             transform: translateY(30px) scale(0.96);
           }
+
           to {
             opacity: 1;
             transform: translateY(0) scale(1);
@@ -164,8 +322,17 @@ const ChatbotWidget = () => {
           padding: 18px 20px;
           color: white;
           background:
-            radial-gradient(circle at top left, rgba(255,255,255,0.28), transparent 35%),
-            linear-gradient(135deg, #0f172a, #1e3a8a, #6366f1);
+            radial-gradient(
+              circle at top left,
+              rgba(255,255,255,0.28),
+              transparent 35%
+            ),
+            linear-gradient(
+              135deg,
+              #0f172a,
+              #1e3a8a,
+              #6366f1
+            );
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -185,7 +352,8 @@ const ChatbotWidget = () => {
           display: grid;
           place-items: center;
           font-size: 22px;
-          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
+          box-shadow:
+            inset 0 0 0 1px rgba(255,255,255,0.25);
         }
 
         .chat-header h6 {
@@ -212,7 +380,11 @@ const ChatbotWidget = () => {
           overflow-y: auto;
           padding: 18px;
           background:
-            radial-gradient(circle at top left, rgba(99,102,241,0.08), transparent 35%),
+            radial-gradient(
+              circle at top left,
+              rgba(99,102,241,0.08),
+              transparent 35%
+            ),
             #f8fbff;
         }
 
@@ -231,7 +403,8 @@ const ChatbotWidget = () => {
           border-radius: 18px;
           font-size: 14px;
           line-height: 1.55;
-          box-shadow: 0 10px 30px rgba(15,23,42,0.08);
+          box-shadow:
+            0 10px 30px rgba(15,23,42,0.08);
           white-space: pre-line;
         }
 
@@ -242,12 +415,12 @@ const ChatbotWidget = () => {
         }
 
         .chat-msg.user .chat-bubble {
-          background: linear-gradient(135deg, #6366f1, #0ea5e9);
+          background:
+            linear-gradient(135deg, #6366f1, #0ea5e9);
           color: white;
           border-bottom-right-radius: 5px;
         }
 
-        /* Thinking Animation */
         .thinking-bubble {
           display: flex;
           align-items: center;
@@ -265,13 +438,28 @@ const ChatbotWidget = () => {
           animation: blink 1.4s infinite ease-in-out both;
         }
 
-        .dot:nth-child(1) { animation-delay: 0s; }
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
+        .dot:nth-child(1) {
+          animation-delay: 0s;
+        }
+
+        .dot:nth-child(2) {
+          animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+          animation-delay: 0.4s;
+        }
 
         @keyframes blink {
-          0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
-          40% { opacity: 1; transform: scale(1.2); }
+          0%, 80%, 100% {
+            opacity: 0.2;
+            transform: scale(0.8);
+          }
+
+          40% {
+            opacity: 1;
+            transform: scale(1.2);
+          }
         }
 
         .chat-input-area {
@@ -297,8 +485,10 @@ const ChatbotWidget = () => {
           border-radius: 50%;
           border: none;
           color: white;
-          background: linear-gradient(135deg, #6366f1, #0ea5e9);
-          box-shadow: 0 12px 30px rgba(99,102,241,0.35);
+          background:
+            linear-gradient(135deg, #6366f1, #0ea5e9);
+          box-shadow:
+            0 12px 30px rgba(99,102,241,0.35);
           cursor: pointer;
         }
 
@@ -342,66 +532,121 @@ const ChatbotWidget = () => {
 
       {open && (
         <div className="chat-panel">
+
+          {/* HEADER */}
           <div className="chat-header">
             <div className="chat-brand">
+
               <div className="chat-avatar">
                 <i className="bi bi-robot"></i>
               </div>
+
               <div>
                 <h6>CareerSync AI</h6>
                 <small>Online • Job Assistant</small>
               </div>
+
             </div>
 
-            <button className="chat-close" onClick={() => setOpen(false)}>
+            <button
+              className="chat-close"
+              onClick={() => setOpen(false)}
+            >
               <i className="bi bi-x-lg"></i>
             </button>
           </div>
 
-          <div className="chat-body" ref={chatBodyRef}>
+          {/* CHAT BODY */}
+          <div
+            className="chat-body"
+            ref={chatBodyRef}
+          >
+
+            {/* QUICK ACTIONS */}
             <div className="quick-actions">
-              <button onClick={() => handleSend("Recommend jobs for me")}>
+
+              <button
+                onClick={() =>
+                  handleSend("Recommend jobs for me")
+                }
+              >
                 Recommend jobs
               </button>
-              <button onClick={() => handleSend("How to improve my resume?")}>
+
+              <button
+                onClick={() =>
+                  handleSend("How to improve my resume?")
+                }
+              >
                 Resume help
               </button>
-              <button onClick={() => handleSend("What skills should I learn?")}>
+
+              <button
+                onClick={() =>
+                  handleSend("What skills should I learn?")
+                }
+              >
                 Skill gap
               </button>
-              <button onClick={() => handleSend("Give interview tips")}>
+
+              <button
+                onClick={() =>
+                  handleSend("Give interview tips")
+                }
+              >
                 Interview tips
               </button>
+
             </div>
 
+            {/* CHAT MESSAGES */}
             {chats.map((chat, index) => (
-              <div key={index} className={`chat-msg ${chat.sender}`}>
-                <div className="chat-bubble">{chat.text}</div>
+              <div
+                key={index}
+                className={`chat-msg ${chat.sender}`}
+              >
+                <div className="chat-bubble">
+                  <ReactMarkdown>
+                    {chat.text}
+                  </ReactMarkdown>
+                </div>
               </div>
             ))}
 
-            {/* Dynamic Thinking Indicator */}
+            {/* THINKING INDICATOR */}
             {loading && (
               <div className="chat-msg bot">
                 <div className="chat-bubble thinking-bubble">
-                  <span>CareerSync AI is thinking</span>
+
+                  <span>
+                    CareerSync AI is thinking
+                  </span>
+
                   <div className="dot"></div>
                   <div className="dot"></div>
                   <div className="dot"></div>
+
                 </div>
               </div>
             )}
+
           </div>
 
+          {/* INPUT */}
           <div className="chat-input-area">
+
             <input
               type="text"
               placeholder="Ask about jobs, resume, skills..."
               value={message}
               disabled={loading}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) =>
+                setMessage(e.target.value)
+              }
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleSend();
+                if (e.key === "Enter") {
+                  handleSend();
+                }
               }}
             />
 
@@ -412,17 +657,24 @@ const ChatbotWidget = () => {
             >
               <i className="bi bi-send-fill"></i>
             </button>
+
           </div>
+
         </div>
       )}
 
-      <button className="chat-float-btn" onClick={() => setOpen(!open)}>
+      {/* FLOATING BUTTON */}
+      <button
+        className="chat-float-btn"
+        onClick={() => setOpen(!open)}
+      >
         {open ? (
           <i className="bi bi-x-lg"></i>
         ) : (
           <i className="bi bi-chat-dots-fill"></i>
         )}
       </button>
+
     </>
   );
 };
