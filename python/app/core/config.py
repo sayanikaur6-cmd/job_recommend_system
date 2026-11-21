@@ -1,5 +1,6 @@
 from typing import List
 from pydantic_settings import BaseSettings
+import os
 
 
 class Settings(BaseSettings):
@@ -20,10 +21,10 @@ class Settings(BaseSettings):
     # Groq
     # =========================
 
-    GROQ_API_KEY: str
+    # GROQ_API_KEY: str =  os.getenv("GROQ_API_KEY", "")
 
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
-
+    GROQ_API_KEY: str 
     GROQ_MODEL_NAME: str = "openai/gpt-oss-20b"
 
     # =========================
@@ -41,6 +42,7 @@ class Settings(BaseSettings):
     JSEARCH_API_KEY: str
 
     JSEARCH_HOST: str = "jsearch.p.rapidapi.com"
+    MAX_QUESTIONS: int = 5
 
     # =========================
     # Other

@@ -8,7 +8,10 @@ class InterviewController:
     @staticmethod
     async def start_interview(request: StartRequest) -> StartResponse:
         try:
+            print("Starting new interview session...")
+            print(f"Role: {request.role}")
             session_id, ai_reply = interview_service.start_new_session(request.role)
+            print(f"New session started with ID: {session_id}")
             return StartResponse(
                 session_id=session_id,
                 response=ai_reply,
