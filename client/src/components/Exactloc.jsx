@@ -11,33 +11,38 @@ const Exactloc = ({
     lat,
     lng
 }) => {
+    if (lat !== 20.593684 && lng !== 78.96288) {
+        return (
 
-    return (
+            <div
+                onClick={() =>
+                    openMap(
+                        company,
+                        city,
+                        state,
+                        country,
+                        lat,
+                        lng
+                    )
+                }
+                style={{
+                    cursor: "pointer",
+                    display: "flex",
+                    gap: "8px",
+                    alignItems: "center",
+                }}
+            >
+                <FaLocationDot size={20} />
+                View Location
 
-        <div
-            onClick={() =>
-                openMap(
-                    company,
-                    city,
-                    state,
-                    country,
-                    lat,
-                    lng
-                )
-            }
-            style={{
-                cursor: "pointer",
-                display: "flex",
-                gap: "8px",
-                alignItems: "center",
-            }}
-        >
-            <FaLocationDot size={20} />
-            View Location
+            </div>
 
-        </div>
-
-    );
+        );
+    } else {
+        return (
+            <div>   </div>
+        );
+    }
 };
 
 export default Exactloc;

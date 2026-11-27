@@ -6,7 +6,7 @@ export const openMap = (
     lat,
     lng
 ) => {
-
+    console.log("openMap called with:", { company, city, state, country, lat, lng });
     // Priority-1
     if (company && city && state) {
 
