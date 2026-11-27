@@ -359,6 +359,27 @@ export default function Interview() {
   const result =
     report?.structured_result || {};
 
+  const weakTopics = Array.isArray(result.weak_topics) ? result.weak_topics : [];
+  const summary = typeof result.summary === "string" ? result.summary :
+    typeof report?.summary === "string" ? report.summary :
+    typeof report?.response === "string" ? report.response.replace(/```json[\s\S]*?```/gi, "").trim() : "";
+
+  const getResource = (resource) => {
+    if (!resource || resource.is_verified !== true) return null;
+    try {
+      const url = new URL(resource.url);
+      if (url.protocol !== "https:" || !["www.youtube.com", "youtube.com"].includes(url.hostname)) return null;
+      const playlist = resource.type === "playlist";
+      if (!playlist && resource.type !== "video") return null;
+      const id = url.searchParams.get(playlist ? "list" : "v");
+      if (url.pathname !== (playlist ? "/playlist" : "/watch") || !id || !(playlist ? /^[A-Za-z0-9_-]{2,100}$/ : /^[A-Za-z0-9_-]{11}$/).test(id)) return null;
+      return { ...resource,
+        url: playlist ? `https://www.youtube.com/playlist?list=${id}` : `https://www.youtube.com/watch?v=${id}`,
+        embed: playlist ? `https://www.youtube-nocookie.com/embed/videoseries?list=${id}` : `https://www.youtube-nocookie.com/embed/${id}`
+      };
+    } catch { return null; }
+  };
+
   const totalScore =
     scores.total_score || 0;
 
@@ -1735,6 +1756,30 @@ export default function Interview() {
             rgba(99,102,241,.4);
         }
 
+
+        .learning-section { margin-top: 25px; }
+        .learning-section h3 { margin: 0 0 12px; font-size: 22px; }
+        .learning-section p { color: #cbd5e1; line-height: 1.65; overflow-wrap: anywhere; }
+        .weak-topic { margin-top: 16px; padding: 22px; border: 1px solid rgba(255,255,255,.09); border-radius: 20px; background: rgba(255,255,255,.035); }
+        .weak-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .weak-heading h4 { margin: 0; font-size: 18px; }
+        .priority { padding: 6px 12px; border-radius: 999px; font-size: 12px; background: #334155; }
+        .priority.high { color: #fca5a5; background: rgba(239,68,68,.15); }
+        .priority.medium { color: #fcd34d; background: rgba(245,158,11,.15); }
+        .priority.low { color: #6ee7b7; background: rgba(16,185,129,.15); }
+        .resource-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,240px),1fr)); gap: 14px; }
+        .resource-card { padding: 16px; background: #111827; border: 1px solid #334155; border-radius: 14px; display: flex; flex-direction: column; gap: 10px; overflow-wrap: anywhere; }
+        .resource-card small { color: #94a3b8; }
+        .resource-link { margin-top: auto; display: block; padding: 11px; text-align: center; background: #b91c1c; color: white; border-radius: 10px; text-decoration: none; font-weight: 700; }
+        .resource-link:hover { background: #dc2626; }
+        .resource-thumbnail { display:block; position:relative; aspect-ratio:16/9; background:#070b17; overflow:hidden; border-radius:10px; }
+        .resource-thumbnail img { width:100%; height:100%; object-fit:cover; display:block; }
+        .resource-play { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#dc2626; color:white; padding:9px 18px; border-radius:10px; }
+        .resource-type { position:absolute; bottom:8px; right:8px; background:#111827; color:white; padding:5px 8px; border-radius:5px; font-size:10px; }
+        .resource-player summary { cursor:pointer; color:#a5b4fc; font-size:13px; }
+        .resource-player iframe { width:100%; aspect-ratio:16/9; border:0; margin-top:10px; border-radius:8px; }
+        .evaluation-summary { white-space: pre-wrap; }
+
         /* ================= RESPONSIVE ================= */
 
         @media (max-width: 900px) {
@@ -2327,6 +2372,11 @@ export default function Interview() {
 
 
                   <div className="metrics">
+                    <div>
+                      <div className="metric-head"><span>Confidence</span><strong>{scores.confidence ?? 0}%</strong></div>
+                      <div className="metric-track"><div className="metric-fill" style={{ width: `${Math.max(0, Math.min(100, Number(scores.confidence) || 0))}%` }} /></div>
+                    </div>
+
 
                     <div>
 
@@ -2483,6 +2533,53 @@ export default function Interview() {
 
                 </div>
 
+
+                <section className="learning-section">
+                  <h3>📚 Personalized Learning Recommendations</h3>
+                  <p>Improve the specific topics identified in your interview.</p>
+                  {weakTopics.length === 0 && <p>{Array.isArray(result.weak_topics) ? "No specific weak topics were returned." : "Learning recommendations are unavailable. Check the backend evaluation response."}</p>}
+                  {weakTopics.map((item, index) => {
+                    const resources = (Array.isArray(item.recommended_resources) ? item.recommended_resources : []).map(getResource).filter(Boolean);
+                    return (
+                      <article className="weak-topic" key={index}>
+                        <div className="weak-heading">
+                          <h4>{item.topic}</h4>
+                          <span className={`priority ${String(item.priority || "").toLowerCase()}`}>{item.priority || "Unspecified"} priority</span>
+                        </div>
+                        {item.category && <p>{item.category}{item.difficulty ? ` · ${item.difficulty}` : ""}</p>}
+                        {Array.isArray(item.learning_objectives) && item.learning_objectives.length > 0 && <ul className="report-list">{item.learning_objectives.map((objective, i) => <li key={i}>{objective}</li>)}</ul>}
+                        {item.reason && <p><strong>Why improve:</strong> {item.reason}</p>}
+                        {item.improvement_tip && <p><strong>Improvement tip:</strong> {item.improvement_tip}</p>}
+                        <div className="resource-grid">
+                          {resources.map((resource) => (
+                            <div className="resource-card" key={resource.url}>
+                              <a className="resource-thumbnail" href={resource.url} target="_blank" rel="noopener noreferrer">
+                                {resource.thumbnail && <img src={resource.thumbnail} alt={resource.title || "YouTube resource"} loading="lazy" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
+                                <span className="resource-play">▶</span>
+                                <span className="resource-type">{resource.type === "playlist" ? "PLAYLIST" : "VIDEO"}</span>
+                              </a>
+                              <strong>{resource.title}</strong>
+                              <small>{resource.channel_name}</small>
+                              <a className="resource-link" href={resource.url} target="_blank" rel="noopener noreferrer">
+                                {resource.type === "playlist" ? "View Full Playlist" : "Watch Video"} ↗
+                              </a>
+                              <details className="resource-player" onToggle={(e) => {
+                                const frame = e.currentTarget.querySelector("iframe");
+                                if (e.currentTarget.open) frame.src = resource.embed;
+                                else frame.removeAttribute("src");
+                              }}>
+                                <summary>Play here</summary>
+                                <iframe title={resource.title || "YouTube player"} loading="lazy" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowFullScreen />
+                              </details>
+                            </div>
+                          ))}
+                        </div>
+                        {!resources.length && <p>Verified YouTube resources are currently unavailable for this topic.</p>}
+                      </article>
+                    );
+                  })}
+                </section>
+                {summary && <section className="learning-section report-card"><h3>📝 Final Evaluation Summary</h3><p className="evaluation-summary">{summary}</p></section>}
 
                 {/* RESTART */}
 
